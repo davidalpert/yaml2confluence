@@ -6,7 +6,8 @@ import (
 	"github.com/hoisie/mustache"
 )
 
-var TEMPLATE_DIR = "./resources/templates"
+//TODO needs to be discoverable by convention
+var TEMPLATE_DIR = "instances/yaml2confluence/templates"
 
 func RenderTemplate(data map[interface{}]interface{}) string {
 	kind := data["kind"].(string)

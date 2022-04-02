@@ -23,10 +23,19 @@ func GetDefaultSecretPath() string {
 	return filepath.Join(GetDefaultY2cHomeDir(), DEFAULT_SECRET_FILENAME)
 }
 
-func GetSecretAndGenerateIfMissing() string {
+func GetSecret() (string, error) {
 	secret, err := os.ReadFile(GetDefaultSecretPath())
+	if err != nil {
+		return "", err
+	}
+
+	return string(secret), nil
+}
+
+func GetSecretAndGenerateIfMissing() string {
+	secret, err := GetSecret()
 	if err == nil {
-		return string(secret)
+		return secret
 	}
 
 	return GenerateSecret()
@@ -109,4 +118,34 @@ func CreateInstanceDirectory(baseDir string, name string, config string) {
 	}
 	fmt.Println("Created file " + configFile)
 
+}
+
+func ResolveAbsolutePathDir(dir string) string {
+	if filepath.IsAbs(dir) {
+		return dir
+	}
+
+	current, err := fs.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	if dir == "" {
+		return current
+	}
+
+	absPath, err := filepath.Abs(filepath.Join(current, dir))
+	if err != nil {
+		panic(err)
+	}
+
+	return absPath
+}
+
+func ResolveAbsolutePathFile(file string) string {
+	if file == "" {
+		panic("no file provided")
+	}
+
+	return ResolveAbsolutePathDir(file)
 }

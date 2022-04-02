@@ -6,16 +6,11 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/NorthfieldIT/yaml2confluence/internal/confluence"
 )
 
-type InstanceConfig struct {
-	Name      string
-	Host      string
-	API_token string
-}
-
-func NewInstanceWizard() InstanceConfig {
-	instance := InstanceConfig{}
+func NewInstanceWizard() confluence.InstanceConfig {
+	instance := confluence.InstanceConfig{}
 
 	hostPrompt := &survey.Input{Message: "Confluence Host"}
 	survey.AskOne(hostPrompt, &instance.Host, survey.WithValidator(survey.Required))
@@ -25,6 +20,13 @@ func NewInstanceWizard() InstanceConfig {
 			Prompt: &survey.Input{
 				Message: "Instance Name",
 				Default: strings.Split(instance.Host, ".")[0],
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "user",
+			Prompt: &survey.Input{
+				Message: "Username",
 			},
 			Validate: survey.Required,
 		},

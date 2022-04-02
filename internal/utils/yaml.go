@@ -1,24 +1,17 @@
 package utils
 
-import (
-	"log"
-	"os"
+// func LoadYaml(file string) map[interface{}]interface{} {
+// 	data, err := os.ReadFile(file)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	"gopkg.in/yaml.v2"
-)
+// 	m := make(map[interface{}]interface{})
 
-func LoadYaml(file string) map[interface{}]interface{} {
-	data, err := os.ReadFile(file)
-	if err != nil {
-		panic(err)
-	}
+// 	err = yaml.Unmarshal(data, &m)
+// 	if err != nil {
+// 		log.Fatalf("error: %v", err)
+// 	}
 
-	m := make(map[interface{}]interface{})
-
-	err = yaml.Unmarshal(data, &m)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
-
-	return m
-}
+// 	return m
+// }

@@ -1,0 +1,5 @@
+kind: application
+title: Test Application 3
+description: |-
+  This is a test application. The third one.
+  Multi-line -- Wow!

@@ -1,12 +1,18 @@
 package cli
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"strings"
 
+	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
 	"github.com/docopt/docopt-go"
 )
+
+// TODO set this up globally
+func init() {
+	log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
+}
 
 var usage = `
 y2c
@@ -17,58 +23,71 @@ Usage:
 
 Options:
 	-h --help  		Show this screen.
-	<command> ?  	Usage information for a specific command
+	<command> ?	  	Usage information for a specific command
 
 Commands:
 	render  		Renders a single YAML resource
-	help  			Displays the usage for a command
 	instances  		Manage Confluence instance configuration
 	
 See 'y2c <command> ?' for more information on a specific command.
 `
 
-type Command struct {
-	usage   string
-	handler func(docopt.Opts)
+type Command interface {
+	Usage() string
+	Handler(docopt.Opts)
 }
 
-var commands = map[string]Command{}
+var Commands = map[string]Command{}
 
 func Parse() {
-	parser := &docopt.Parser{OptionsFirst: true}
-	args, _ := parser.ParseArgs(usage, nil, "")
+	helpHandlerInvoked := false
 
-	// print usage if no command provided
-	cmdName, exists := args["<command>"].(string)
-	if !exists {
-		PrintUsage(usage, 1)
+	parser := &docopt.Parser{
+		OptionsFirst: true,
+		HelpHandler: func(err error, _ string) {
+			helpHandlerInvoked = true
+		},
 	}
 
-	// print usage if command doesn't exist
-	cmd, exists := commands[cmdName]
-	if !exists {
+	args, err := parser.ParseArgs(usage, nil, "")
+	if err != nil {
 		PrintUsage(usage, 1)
+		return
+	}
+	if helpHandlerInvoked {
+		PrintUsage(usage, 0)
+		return
+	}
+
+	cmd, exists := Commands[args["<command>"].(string)]
+	if !exists {
+		log.Printf(utils.COMMAND_NOT_FOUND, args["<command>"].(string))
+		Exit(1)
+		return
 	}
 
 	// print command usage if <command> ?
 	if args["?"].(bool) {
-		PrintUsage(cmd.usage, 0)
+		PrintUsage(cmd.Usage(), 0)
+		return
 	}
 
 	// parse command usage and execute handler
-	cmdArgs, _ := docopt.ParseDoc(cmd.usage)
-	cmd.handler(cmdArgs)
+	cmdArgs, _ := docopt.ParseDoc(cmd.Usage())
+	cmd.Handler(cmdArgs)
 }
 
 func PrintUsage(usage string, exitCode int) {
-	fmt.Println(strings.TrimSpace(usage))
-	os.Exit(exitCode)
+	log.Println(strings.TrimSpace(usage))
+	Exit(exitCode)
 }
 
-func RegisterCommand(name string, usage string, handler func(docopt.Opts)) {
-	commands[name] = Command{usage, handler}
+func RegisterCommand(name string, cmd Command) {
+	Commands[name] = cmd
 }
 
-func GetCommandUsage(name string) string {
-	return commands[name].usage
+var exitFunction func(code int) = os.Exit
+
+func Exit(code int) {
+	exitFunction(code)
 }
