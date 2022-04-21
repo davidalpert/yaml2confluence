@@ -6,7 +6,7 @@ import (
 )
 
 type IRenderSrv interface {
-	RenderSingleResource(string) (string, string)
+	RenderSingleResource(string) string
 }
 
 type RenderSrv struct{}
@@ -15,8 +15,11 @@ func NewRenderService() RenderSrv {
 	return RenderSrv{}
 }
 
-func (RenderSrv) RenderSingleResource(file string) (string, string) {
-	yaml := resources.LoadYaml(file)
+func (RenderSrv) RenderSingleResource(file string) string {
+	dirProps := utils.GetDirectoryProperties(file)
+	yr := utils.LoadSingleYamlResource(file)
 
-	return yaml["title"].(string), utils.RenderTemplate(yaml)
+	utils.RenderPage(resources.NewPage(yr.Path, yr), utils.LoadTemplate(yr.Kind, dirProps.TemplatesDir), utils.LoadHook(yr.Kind, dirProps.HooksDir))
+
+	return yr.Json
 }

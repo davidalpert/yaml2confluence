@@ -15,15 +15,16 @@ type RenderCmd struct {
 func (RenderCmd) Usage() string {
 	return `
 Usage:
-	y2c render -f <file> | --file <file>
+	y2c render <file> [-o <format> | --output <format>]
 
 Options:
-	-f <file>, --file <file>     	The YAML resource to render
+	<file>     							The YAML resource to render
+	-o <format>, --output <format>    	The phase to render to (yaml,json,mst)
 `
 }
 
 func (rc RenderCmd) Handler(args docopt.Opts) {
-	_, markup := rc.service.RenderSingleResource(args["--file"].(string))
+	markup := rc.service.RenderSingleResource(args["<file>"].(string))
 	fmt.Println(markup)
 }
 

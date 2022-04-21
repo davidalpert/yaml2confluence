@@ -13,9 +13,7 @@ type MockInstances struct {
 }
 
 func (mi *MockInstances) New(baseDir string, configOnly bool) {
-	fmt.Println("NEW!!")
 	mi.Calls = append(mi.Calls, []interface{}{"New", baseDir, configOnly})
-	fmt.Println(mi.Calls)
 }
 
 func (mi *MockInstances) List() {
@@ -31,5 +29,13 @@ func TestInstancesHandler(t *testing.T) {
 	os.Args = append(os.Args, args...)
 	cli.Parse()
 
-	t.Fatalf(fmt.Sprint(mockInstancesService.Calls))
+	if len(mockInstancesService.Calls) != 1 {
+		t.Fatalf(`Expected exactly 1 call to instances service, got %d`, len(mockInstancesService.Calls))
+	}
+	expectedCall := "[New ./ false]"
+	actualCall := fmt.Sprint(mockInstancesService.Calls[0])
+
+	if actualCall != expectedCall {
+		t.Fatalf(`Wrong call signature, expected %s, got %s`, expectedCall, actualCall)
+	}
 }

@@ -1,5 +1,7 @@
 kind: wiki
-title: Wiki Example
+title: Test Page 6
+stars: 3
+# TEST
 markup: |
   This is an example wiki page using the markup tag.
   h2. Heading

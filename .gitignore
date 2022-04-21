@@ -1,4 +1,7 @@
 .vscode
+libjq/*
+y2c
 notes.txt
+TODO.txt
 payload.json
 **/.secret

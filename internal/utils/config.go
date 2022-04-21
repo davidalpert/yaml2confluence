@@ -1,14 +1,24 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/thanhpk/randstr"
 )
 
 const DEFAULT_SECRET_FILENAME = ".secret"
+
+type DirectoryProperties struct {
+	ConfigPath   string
+	SpaceDir     string
+	TemplatesDir string
+	HooksDir     string
+	SpaceKey     string
+}
 
 func GetDefaultY2cHomeDir() string {
 	dirname, err := os.UserHomeDir()
@@ -59,6 +69,36 @@ func GenerateSecret() string {
 	fmt.Println("Generated secret key: " + secretPath)
 
 	return string(secret)
+}
+
+func GetDirectoryProperties(path string) DirectoryProperties {
+	dirTokens := strings.Split(ResolveAbsolutePathFile(path), "spaces/")
+	baseDir := dirTokens[0]
+	spaceKey := strings.Split(dirTokens[1], "/")[0]
+
+	props := DirectoryProperties{}
+	props.ConfigPath = filepath.Join(baseDir, "config.yml")
+	props.SpaceDir = filepath.Join(baseDir, "spaces", spaceKey)
+	props.SpaceKey = spaceKey
+	props.TemplatesDir = filepath.Join(baseDir, "templates")
+	props.HooksDir = filepath.Join(baseDir, "hooks")
+
+	if _, err := os.Stat(props.ConfigPath); errors.Is(err, os.ErrNotExist) {
+		fmt.Println("Could not find config.yml")
+		os.Exit(1)
+	}
+
+	if stat, err := os.Stat(props.SpaceDir); errors.Is(err, os.ErrNotExist) || !stat.IsDir() {
+		fmt.Printf("Could not find '%s' space directory", props.SpaceKey)
+		os.Exit(1)
+	}
+
+	if stat, err := os.Stat(props.TemplatesDir); errors.Is(err, os.ErrNotExist) || !stat.IsDir() {
+		fmt.Println("Could not find templates directory")
+		os.Exit(1)
+	}
+
+	return props
 }
 
 func CreateInstanceDirectory(baseDir string, name string, config string) {
