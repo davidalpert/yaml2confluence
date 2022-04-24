@@ -123,8 +123,6 @@ func CreateInstanceDirectory(baseDir string, name string, config string) {
 	}
 
 	instanceDir := filepath.Join(dir, name)
-	spacesDir := filepath.Join(instanceDir, "spaces")
-	templatesDir := filepath.Join(instanceDir, "templates")
 	configFile := filepath.Join(instanceDir, "config.yml")
 
 	// create instance directory
@@ -134,22 +132,13 @@ func CreateInstanceDirectory(baseDir string, name string, config string) {
 			fmt.Println(instanceDir + " already exists.")
 			os.Exit(1)
 		} else {
-			panic(err)
+			fmt.Printf("Failed to create instance directory %s\n%s\n", instanceDir, err.Error())
+			os.Exit(1)
 		}
 	}
-	fmt.Println("Created directory " + instanceDir)
-	// create spaces directory
-	err = os.Mkdir(spacesDir, 0755)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Created directory " + spacesDir)
-	// create templates directory
-	err = os.Mkdir(templatesDir, 0755)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Created directory " + templatesDir)
+
+	// create spaces, templates, and hooks directories
+	createDirectories(instanceDir, []string{"spaces", "templates", "hooks"})
 
 	// write config.yml
 	err = os.WriteFile(configFile, []byte(config), 0644)
@@ -158,6 +147,19 @@ func CreateInstanceDirectory(baseDir string, name string, config string) {
 	}
 	fmt.Println("Created file " + configFile)
 
+}
+
+func createDirectories(instanceDir string, dirs []string) {
+	for _, dir := range dirs {
+		fullDir := filepath.Join(instanceDir, dir)
+
+		err := os.Mkdir(fullDir, 0755)
+		if err != nil {
+			fmt.Printf("Failed to create directory %s\n%s\n", fullDir, err.Error())
+			os.Exit(1)
+		}
+		fmt.Println("Created directory " + fullDir)
+	}
 }
 
 func ResolveAbsolutePathDir(dir string) string {

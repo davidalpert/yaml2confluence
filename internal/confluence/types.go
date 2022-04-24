@@ -18,6 +18,7 @@ type ConfluenceContentPayload struct {
 	Version   Version  `json:"version"`
 	Ancestors []PageId `json:"ancestors"`
 	Body      Body     `json:"body"`
+	Metadata  Metadata `json:"metadata"`
 }
 type Space struct {
 	Key string `json:"key"`
@@ -31,6 +32,15 @@ type Body struct {
 }
 type PageId struct {
 	Id string `json:"id"`
+}
+type Metadata struct {
+	Properties Properties `json:"properties"`
+}
+type Properties struct {
+	Editor Editor `json:"editor"`
+}
+type Editor struct {
+	Value string `json:"value"`
 }
 
 // Label

@@ -36,7 +36,7 @@ func MockLoadYamlFileAsJson(paths [][]interface{}) func(string) []byte {
 	jsonData := make(map[string][]byte)
 	for _, p := range paths {
 		path := p[0].(string)
-		if isYamlFile(path) {
+		if IsYamlFile(path) {
 			jsonData[path] = []byte(fmt.Sprintf("kind: %s\ntitle: %s", p[2].(string), p[3].(string)))
 		}
 	}

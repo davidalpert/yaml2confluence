@@ -37,15 +37,9 @@ func (InstancesSrv) New(baseDir string, configOnly bool) {
 	}
 
 	if configOnly {
-
 		fmt.Println("\n" + strings.TrimSpace(string(configYaml)))
 		os.Exit(0)
 	}
-	// fmt.Println(encryptedToken)
-
-	// decrypted, _ := utils.Decrypt(encryptedToken, secret)
-
-	// fmt.Println(decrypted)
 
 	utils.CreateInstanceDirectory(baseDir, instance.Name, string(configYaml))
 }

@@ -2,8 +2,10 @@ package resources
 
 import (
 	"bytes"
+	"encoding/json"
 	"path/filepath"
 
+	"github.com/aybabtme/orderedjson"
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 	"gopkg.in/yaml.v3"
 )
@@ -44,11 +46,21 @@ func (yr *YamlResource) GetParentPath() string {
 }
 
 func (yr *YamlResource) ToObject() map[string]interface{} {
-	obj := map[string]interface{}{}
-	err := yr.Node.Decode(&obj)
-	if err != nil {
+	var obj map[string]interface{}
+
+	if err := json.Unmarshal([]byte(yr.Json), &obj); err != nil {
 		panic(err)
 	}
 
 	return obj
+}
+
+func (yr *YamlResource) ToOrderedMap() orderedjson.Map {
+	var object orderedjson.Map
+	err := json.Unmarshal([]byte(yr.Json), &object)
+	if err != nil {
+		panic(err)
+	}
+
+	return object
 }

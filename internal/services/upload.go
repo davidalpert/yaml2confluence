@@ -44,7 +44,7 @@ func (us UploadSrv) UploadSpace(spaceDirectory string) {
 
 	pt := resources.NewPageTree(yr)
 
-	utils.RenderAll(pt, dirProps.TemplatesDir, dirProps.HooksDir)
+	utils.NewRenderTools(dirProps, true).RenderAll(pt)
 	spaceExists, err := api.CreateSpaceIfNotExists()
 	if err != nil {
 		fmt.Println(err.Error())

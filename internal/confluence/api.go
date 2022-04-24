@@ -132,6 +132,9 @@ func (api ConfluenceApiService) UpsertPage(page UpsertPageContext) (string, stri
 			Value:          page.GetContent(),
 			Representation: "wiki",
 		}},
+		Metadata: Metadata{Properties{Editor{
+			Value: "V1",
+		}}},
 	}
 
 	if page.GetAncestorId() != "" {

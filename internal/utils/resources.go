@@ -66,7 +66,7 @@ func (yrl YamlResourceLoader) loadYamlResources(dir string) []*resources.YamlRes
 				// save a pointer to the directory YamlResource for later in case an index.yml is found
 				parents[relPath] = yr
 				yrs = append(yrs, yr)
-			} else if isYamlFile(path) {
+			} else if IsYamlFile(path) {
 				yr := yrl.LoadYamlResource(dir, relPath)
 				if isIndexFile(path) {
 					parent := parents[filepath.Dir(relPath)]
@@ -103,14 +103,14 @@ func (yrl YamlResourceLoader) LoadYamlResource(spaceRootDir, relFilePath string)
 	return resources.NewYamlResource(relFilePath, unmarshal(yrl.LoadYaml(filepath.Join(spaceRootDir, relFilePath))))
 }
 
-func isYamlFile(file string) bool {
+func IsYamlFile(file string) bool {
 	ext := filepath.Ext(file)
 	return ext == ".yml" || ext == ".yaml"
 }
 
 func isIndexFile(file string) bool {
 	name := strings.Split(filepath.Base(file), ".")[0]
-	return isYamlFile(file) && (name == "index" || name == "_index")
+	return IsYamlFile(file) && (name == "index" || name == "_index")
 }
 
 func getDefaultDirYamlResource(relPath string) *resources.YamlResource {

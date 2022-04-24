@@ -1,12 +1,15 @@
 package services
 
 import (
+	"os"
+	"strings"
+
 	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
 	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
 )
 
 type IRenderSrv interface {
-	RenderSingleResource(string) string
+	RenderSingleResource(string, string)
 }
 
 type RenderSrv struct{}
@@ -15,11 +18,26 @@ func NewRenderService() RenderSrv {
 	return RenderSrv{}
 }
 
-func (RenderSrv) RenderSingleResource(file string) string {
+func (RenderSrv) RenderSingleResource(file string, output string) {
 	dirProps := utils.GetDirectoryProperties(file)
 	yr := utils.LoadSingleYamlResource(file)
+	page := resources.NewPage(yr.Path, yr)
+	rt := utils.NewRenderTools(dirProps, true)
 
-	utils.RenderPage(resources.NewPage(yr.Path, yr), utils.LoadTemplate(yr.Kind, dirProps.TemplatesDir), utils.LoadHook(yr.Kind, dirProps.HooksDir))
+	target := getRenderTarget(output)
+	rt.RenderTo(target, page)
 
-	return yr.Json
+	utils.PrettyPrint(target, page, os.Stdout)
+}
+
+func getRenderTarget(output string) utils.RenderTarget {
+	lower := strings.ToLower(output)
+	switch lower {
+	case "json":
+		return utils.JSON
+	case "yaml":
+		return utils.YAML
+	default:
+		return utils.MST
+	}
 }

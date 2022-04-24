@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/NorthfieldIT/yaml2confluence/internal/cli"
 	"github.com/NorthfieldIT/yaml2confluence/internal/services"
 	"github.com/docopt/docopt-go"
@@ -24,8 +22,7 @@ Options:
 }
 
 func (rc RenderCmd) Handler(args docopt.Opts) {
-	markup := rc.service.RenderSingleResource(args["<file>"].(string))
-	fmt.Println(markup)
+	rc.service.RenderSingleResource(ToString(args["<file>"]), ToString(args["--output"]))
 }
 
 func init() {
