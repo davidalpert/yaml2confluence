@@ -64,6 +64,7 @@ func (rt *RenderTools) RenderTo(target RenderTarget, p *resources.Page) {
 			p.Resource.Node = node
 		}
 		p.Resource.UpdateJson()
+		fallthrough
 	case target >= JSON:
 		for _, jq := range hookset.Jq {
 			res, err := jq.Run(p.Resource.Json)
