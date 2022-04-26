@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/NorthfieldIT/yaml2confluence/internal/hooks"
 	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
-	. "github.com/flant/libjq-go"
 	"github.com/hoisie/mustache"
 )
 
@@ -24,15 +24,17 @@ const (
 type RenderTools struct {
 	dirProps  DirectoryProperties
 	templates map[string]string
-	hooks     *HookProcessor
+	hooks     *hooks.HookProcessor
 	hasher    hash.Hash
 }
 
 func NewRenderTools(dirProps DirectoryProperties, precompileJqHooks bool) *RenderTools {
 	rt := RenderTools{
-		dirProps:  dirProps,
-		templates: map[string]string{},
-		hooks:     NewHookProcessor(dirProps.HooksDir, precompileJqHooks),
+		dirProps: dirProps,
+		templates: map[string]string{
+			"markup": "{{{markup}}}",
+		},
+		hooks: hooks.NewHookProcessor(dirProps.HooksDir, precompileJqHooks),
 	}
 
 	return &rt
@@ -49,21 +51,28 @@ func (rt *RenderTools) GetTemplate(kind string) string {
 }
 
 func (rt *RenderTools) RenderTo(target RenderTarget, p *resources.Page) {
-	hooks := rt.hooks.GetHooks(p.Resource.Kind)
+	hookset := rt.hooks.GetHookSet(p.Resource.Kind)
 
 	switch {
-	case target >= JSON:
-		for _, hook := range hooks {
-			for _, jq := range hook.Jq {
-				res, err := Jq().Program(jq).Run(p.Resource.Json)
-				if err != nil {
-					fmt.Printf("Failed to render %s\nError in hook: %s\n\njq %s\n%s\n\n", filepath.Join(rt.dirProps.SpaceDir, p.Resource.Path), hook.path, jq, err.Error())
-					os.Exit(1)
-				}
-
-				p.Resource.Json = res
+	case target >= YAML:
+		for _, yq := range hookset.Yq {
+			node, err := yq.Run(p.Resource.Node)
+			if err != nil {
+				panic(err)
 			}
 
+			p.Resource.Node = node
+		}
+		p.Resource.UpdateJson()
+	case target >= JSON:
+		for _, jq := range hookset.Jq {
+			res, err := jq.Run(p.Resource.Json)
+			if err != nil {
+				fmt.Printf("Failed to render %s\nError in hook: %s\n\njq %s\n%s\n\n", filepath.Join(rt.dirProps.SpaceDir, p.Resource.Path), jq.Hook.Path, jq.Cmd, err.Error())
+				os.Exit(1)
+			}
+
+			p.Resource.Json = res
 		}
 		fallthrough
 	case target == MST:

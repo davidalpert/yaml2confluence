@@ -22,27 +22,38 @@ type YamlResource struct {
 	Json  string
 }
 
+var jsonEncoder yqlib.Encoder = yqlib.NewJONEncoder(0)
+
 func NewYamlResource(path string, node *yaml.Node) *YamlResource {
+	setHeadComment(path, node)
+	node.FootComment = "V2"
+
 	requiredFields := &requiredFields{}
 	err := node.Decode(requiredFields)
 	if err != nil {
 		panic(err)
 	}
 
-	var buf bytes.Buffer
-	yqlib.NewJONEncoder(0).Encode(&buf, node)
-
-	return &YamlResource{
+	yr := &YamlResource{
 		Kind:  requiredFields.Kind,
 		Title: requiredFields.Title,
 		Path:  path,
 		Node:  node,
-		Json:  buf.String(),
 	}
+
+	yr.UpdateJson()
+
+	return yr
 }
 
 func (yr *YamlResource) GetParentPath() string {
 	return filepath.Dir(yr.Path)
+}
+
+func (yr *YamlResource) UpdateJson() {
+	var buf bytes.Buffer
+	jsonEncoder.Encode(&buf, yr.Node)
+	yr.Json = buf.String()
 }
 
 func (yr *YamlResource) ToObject() map[string]interface{} {
@@ -63,4 +74,17 @@ func (yr *YamlResource) ToOrderedMap() orderedjson.Map {
 	}
 
 	return object
+}
+
+func setHeadComment(path string, node *yaml.Node) {
+	if node.Kind == 0 {
+		node.Kind = yaml.MappingNode
+	}
+
+	if node.HeadComment == "" {
+		node.HeadComment = path
+	} else {
+		node.HeadComment = path + "\n" + node.HeadComment
+	}
+
 }

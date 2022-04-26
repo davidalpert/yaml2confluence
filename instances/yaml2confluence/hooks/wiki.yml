@@ -1,1 +1,0 @@
-jq: .stars as $s | .stars |= (([range($s)] | map("★") | join(" ")) + " " + ([range(5-$s)] | map("☆") | join(" ")))
