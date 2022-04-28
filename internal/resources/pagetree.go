@@ -15,10 +15,13 @@ type PageUpdate struct {
 	Page      *Page
 }
 
-func NewPageTree(yr []*YamlResource) *PageTree {
+func NewPageTree(yr []*YamlResource, anchor string) *PageTree {
 	pageTree := &PageTree{}
 
 	pageTree.rootPage = NewPage("/", nil)
+	if anchor != "" {
+		pageTree.rootPage.Remote = &RemoteResource{Id: anchor}
+	}
 	pageTree.pages = map[string]*Page{
 		"/": pageTree.rootPage,
 	}

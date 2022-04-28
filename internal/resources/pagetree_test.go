@@ -39,7 +39,7 @@ func TestNewPageTree(t *testing.T) {
 		{"wiki", "test app 5", "/apps/nested/app3.yml", nil, ""},
 	}
 
-	pt := NewPageTree(yr)
+	pt := NewPageTree(yr, "")
 
 	expectedLevels := [][]string{
 		{"/apps"},

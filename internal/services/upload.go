@@ -42,7 +42,7 @@ func (us UploadSrv) UploadSpace(spaceDirectory string) {
 		os.Exit(1)
 	}
 
-	pt := resources.NewPageTree(yr)
+	pt := resources.NewPageTree(yr, "2588719")
 
 	utils.NewRenderTools(dirProps, true).RenderAll(pt)
 	spaceExists, err := api.CreateSpaceIfNotExists()
