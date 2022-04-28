@@ -118,7 +118,7 @@ func isIndexFile(file string) bool {
 }
 
 func ignoreDir(path string) bool {
-	return path[0:1] == "_"
+	return filepath.Base(path)[0:1] == "_"
 }
 
 func getDefaultDirYamlResource(relPath string) *resources.YamlResource {
