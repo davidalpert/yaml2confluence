@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
 	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
 	"gopkg.in/yaml.v3"
 )
@@ -123,7 +124,7 @@ func TestEnsureUniqueTitles(t *testing.T) {
 		t.Fatal(`Expected error, got nil`)
 	}
 
-	expectedErrMsg := fmt.Sprintf(DUPLICATE_TITLE, "test app 2", "/app2.yml", "TEST APP 2", "/app3.yml")
+	expectedErrMsg := fmt.Sprintf(constants.DUPLICATE_TITLE, "test app 2", "/app2.yml", "TEST APP 2", "/app3.yml")
 	if err.Error() != expectedErrMsg {
 		t.Fatalf(`Expected error of "%s", got "%s"`, expectedErrMsg, err.Error())
 	}

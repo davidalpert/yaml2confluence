@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
 	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
 	"gopkg.in/yaml.v3"
 )
@@ -134,10 +135,19 @@ func EnsureUniqueTitles(yrs []*resources.YamlResource) error {
 	for _, cur := range yrs {
 		lowerTitle := strings.ToLower(cur.Title)
 		if r, exists := uniqueTitle[lowerTitle]; exists {
-			return errors.New(fmt.Sprintf(DUPLICATE_TITLE, r.Title, r.Path, cur.Title, cur.Path))
+			return errors.New(fmt.Sprintf(constants.DUPLICATE_TITLE, r.Title, r.Path, cur.Title, cur.Path))
 		} else {
 			uniqueTitle[lowerTitle] = cur
 		}
 	}
 	return nil
+}
+
+func GetAnchor(spaceDir string) string {
+	data, err := os.ReadFile(filepath.Join(spaceDir, ".anchor"))
+	if err != nil {
+		return ""
+	}
+
+	return string(data)
 }

@@ -1,5 +1,7 @@
 kind: application
 title: Test Application 1
+labels:
+  - appss
 description: |-
   This is a test application.
-  Multi-line -- Wow!
+  Multi-line -- Wow!ss

@@ -3,6 +3,7 @@ package resources
 type RemoteResource struct {
 	Id        string
 	Title     string
+	Labels    []string
 	Link      string
 	Version   int
 	Ancestors []Ancestor
@@ -20,10 +21,19 @@ type RemoteSha256 struct {
 	Version int
 }
 
-func (rr *RemoteResource) GetTitlePath() []string {
+func (rr *RemoteResource) GetTitlePath(anchorId string) []string {
 	titlePath := []string{}
-	// append all of the ancestor titles, skipping the first one (the space page)
-	for _, ancestor := range rr.Ancestors[1:] {
+	startIndex := 1 // first page after space page
+
+	if anchorId != "" {
+		for i, ancestor := range rr.Ancestors[startIndex:] {
+			if ancestor.Id == anchorId {
+				startIndex = i + 2
+			}
+		}
+	}
+	// append all of the ancestor titles, skipping the space page, and possibly the hierachy upto the anchor
+	for _, ancestor := range rr.Ancestors[startIndex:] {
 		titlePath = append(titlePath, ancestor.Title)
 	}
 

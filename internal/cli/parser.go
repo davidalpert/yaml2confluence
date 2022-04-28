@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
+	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
 	"github.com/docopt/docopt-go"
 )
 
@@ -61,7 +61,7 @@ func Parse() {
 
 	cmd, exists := Commands[args["<command>"].(string)]
 	if !exists {
-		log.Printf(utils.COMMAND_NOT_FOUND, args["<command>"].(string))
+		log.Printf(constants.COMMAND_NOT_FOUND, args["<command>"].(string))
 		Exit(1)
 		return
 	}

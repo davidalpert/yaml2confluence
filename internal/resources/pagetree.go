@@ -6,6 +6,7 @@ import (
 
 type PageTree struct {
 	rootPage *Page
+	anchor   string
 	pages    map[string]*Page
 	deletes  [][]PageUpdate
 }
@@ -16,7 +17,7 @@ type PageUpdate struct {
 }
 
 func NewPageTree(yr []*YamlResource, anchor string) *PageTree {
-	pageTree := &PageTree{}
+	pageTree := &PageTree{anchor: anchor}
 
 	pageTree.rootPage = NewPage("/", nil)
 	if anchor != "" {
@@ -42,7 +43,7 @@ func (pt *PageTree) AddRemotes(remotes []*RemoteResource) {
 	orphans := []orphanPage{}
 
 	for _, remote := range remotes {
-		titlePath := remote.GetTitlePath()
+		titlePath := remote.GetTitlePath(pt.anchor)
 		page := pt.GetPageFromTitlePath(titlePath)
 		if page != nil {
 			page.Remote = remote

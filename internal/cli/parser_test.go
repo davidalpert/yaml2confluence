@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
+	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
 	"github.com/docopt/docopt-go"
 )
 
@@ -50,7 +50,7 @@ func TestCommandNotFound(t *testing.T) {
 	commandName := "instances"
 	output, exitCode := ExecParseWithMocks(commandName, "")
 
-	expected := fmt.Sprintf(utils.COMMAND_NOT_FOUND, commandName)
+	expected := fmt.Sprintf(constants.COMMAND_NOT_FOUND, commandName)
 	if output != expected {
 		t.Fatalf("\nexpected output:\n\t%s\nactual:\n\t%s", expected, output)
 	}

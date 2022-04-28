@@ -1,5 +1,11 @@
 package resources
 
+import (
+	"sort"
+
+	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
+)
+
 type ChangeType int
 
 const (
@@ -96,19 +102,54 @@ func (p *Page) GetRemoteSha256Version() int {
 	return p.Remote.Sha256.Version
 }
 
-func (p *Page) GetChangeType() ChangeType {
-	if p.Resource != nil && p.Remote != nil {
-		if p.Content.Sha256 != p.Remote.Sha256.Value {
-			return UPDATE
-		} else {
-			return NOOP
+func (p *Page) LabelsDiffer() bool {
+	// if we don't have labels to compare on both sides, return false
+	if p.Resource == nil || p.Remote == nil {
+		return false
+	}
+
+	l := append([]string{constants.GENERATED_BY_LABEL}, p.Resource.GetLabels()...)
+	r := append([]string{}, p.Remote.Labels...)
+
+	sort.Strings(l)
+	sort.Strings(r)
+
+	if len(l) != len(r) {
+		return true
+	}
+
+	for i := range l {
+		if l[i] != r[i] {
+			return true
 		}
+	}
+
+	return false
+}
+func (p *Page) Sha256Differs() bool {
+	// if we don't have sha256s to compare on both sides, return false
+	if p.Resource == nil || p.Remote == nil {
+		return false
+	}
+
+	if p.Content.Sha256 != p.Remote.Sha256.Value {
+		return true
+	}
+
+	return false
+}
+func (p *Page) GetChangeType() ChangeType {
+	if p.Sha256Differs() || p.LabelsDiffer() {
+		return UPDATE
+	}
+	if p.Resource != nil && p.Remote == nil {
+		return CREATE
 	}
 	if p.Resource == nil && p.Remote != nil {
 		return DELETE
 	}
 
-	return CREATE
+	return NOOP
 }
 
 func (p *Page) GetSha256Property() Property {
@@ -130,6 +171,9 @@ func (p *Page) GetAncestorId() string {
 }
 func (p *Page) GetContent() string {
 	return p.Content.Markup
+}
+func (p *Page) GetLabels() []string {
+	return p.Resource.GetLabels()
 }
 func (p *Page) GetIncrementedVersion() int {
 	return p.GetRemoteVersion() + 1

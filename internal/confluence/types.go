@@ -35,6 +35,7 @@ type PageId struct {
 }
 type Metadata struct {
 	Properties Properties `json:"properties"`
+	Labels     []Label    `json:"labels"`
 }
 type Properties struct {
 	Editor Editor `json:"editor"`
@@ -93,6 +94,9 @@ type ConfluencePageExpanded struct {
 				Value   string
 				Version Version
 			}
+		}
+		Labels struct {
+			Results []Label
 		}
 	}
 	Links struct {

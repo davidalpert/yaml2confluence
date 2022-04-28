@@ -10,6 +10,13 @@ import (
 	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
 )
 
+var CHANGE_VERBS = map[resources.ChangeType]string{
+	resources.CREATE: "Created",
+	resources.UPDATE: "Updated",
+	resources.DELETE: "Deleted",
+	resources.NOOP:   "Skipped",
+}
+
 type IUploadSrv interface {
 	UploadSingleResource(string)
 	UploadSpace(string)
@@ -42,7 +49,7 @@ func (us UploadSrv) UploadSpace(spaceDirectory string) {
 		os.Exit(1)
 	}
 
-	pt := resources.NewPageTree(yr, "2588719")
+	pt := resources.NewPageTree(yr, utils.GetAnchor(spaceDirectory))
 
 	utils.NewRenderTools(dirProps, true).RenderAll(pt)
 	spaceExists, err := api.CreateSpaceIfNotExists()
@@ -72,9 +79,16 @@ func toRemoteResource(pages []confluence.ConfluencePageExpanded, base string) []
 			ancestors = append(ancestors, resources.Ancestor{Id: ancestor.Id, Title: ancestor.Title})
 		}
 
+		labels := []string{}
+
+		for _, label := range page.Metadata.Labels.Results {
+			labels = append(labels, label.Name)
+		}
+
 		remotes = append(remotes, &resources.RemoteResource{
 			Id:        page.Id,
 			Title:     page.Title,
+			Labels:    labels,
 			Link:      base + page.Links.Webui,
 			Version:   page.Version.Number,
 			Ancestors: ancestors,
@@ -112,24 +126,28 @@ func update(api confluence.ConfluenceApiService, changes [][]resources.PageUpdat
 							log.Fatal(err)
 						}
 					},
-					func() {
-						err = api.SetLabels(id, []string{"generated_by=yaml2confluence"})
-						if err != nil {
-							log.Fatal(err)
-						}
-					},
+					// func() {
+					// 	err = api.SetLabels(id, []string{"generated_by=yaml2confluence"})
+					// 	if err != nil {
+					// 		log.Fatal(err)
+					// 	}
+					// },
 				}
-				utils.EachLimit(len(extraCalls), 2, func(index int) { extraCalls[index]() })
+				utils.EachLimit(len(extraCalls), 1, func(index int) { extraCalls[index]() })
 
-				fmt.Printf("%s %s\n", utils.CHANGE_VERBS[change.Operation], page.Remote.Link)
+				op := CHANGE_VERBS[change.Operation]
+				if change.Operation == resources.UPDATE && !page.Sha256Differs() && page.LabelsDiffer() {
+					op = "Labels "
+				}
+				fmt.Printf("%s  %s\n", op, page.Remote.Link)
 			case resources.DELETE:
 				err := api.DeletePage(page.GetRemoteId())
 				if err != nil {
 					log.Fatal(err)
 				}
-				fmt.Printf("%s %s\n", utils.CHANGE_VERBS[change.Operation], page.Remote.Link)
+				fmt.Printf("%s  %s\n", CHANGE_VERBS[change.Operation], page.Remote.Link)
 			case resources.NOOP:
-				fmt.Printf("%s %s\n", utils.CHANGE_VERBS[change.Operation], page.Remote.Link)
+				fmt.Printf("%s  %s\n", CHANGE_VERBS[change.Operation], page.Remote.Link)
 			}
 		})
 	}

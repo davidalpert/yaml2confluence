@@ -11,8 +11,12 @@ import (
 )
 
 type KindAndTitle struct {
-	Kind  string `yaml:"kind"`
-	Title string `yaml:"title"`
+	Kind  string `json:"kind"`
+	Title string `json:"title"`
+}
+
+type Labels struct {
+	Labels []string `json:"labels"`
 }
 type YamlResource struct {
 	Kind  string
@@ -28,17 +32,9 @@ func NewYamlResource(path string, node *yaml.Node) *YamlResource {
 	setHeadComment(path, node)
 	node.FootComment = "V2"
 
-	requiredFields := &KindAndTitle{}
-	err := node.Decode(requiredFields)
-	if err != nil {
-		panic(err)
-	}
-
 	yr := &YamlResource{
-		Kind:  requiredFields.Kind,
-		Title: requiredFields.Title,
-		Path:  path,
-		Node:  node,
+		Path: path,
+		Node: node,
 	}
 
 	yr.UpdateJson()
@@ -66,6 +62,15 @@ func (yr *YamlResource) UpdateKindAndTitle() {
 
 	yr.Kind = kindAndTitle.Kind
 	yr.Title = kindAndTitle.Title
+}
+
+func (yr *YamlResource) GetLabels() []string {
+	labels := &Labels{}
+	if err := json.Unmarshal([]byte(yr.Json), &labels); err != nil {
+		panic(err)
+	}
+
+	return labels.Labels
 }
 
 func (yr *YamlResource) ToObject() map[string]interface{} {

@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
 )
 
 var expectedStatusCode = map[string]int{
@@ -105,6 +107,7 @@ type UpsertPageContext interface {
 	GetTitle() string
 	GetAncestorId() string
 	GetContent() string
+	GetLabels() []string
 	GetIncrementedVersion() int
 	IsUpdate() bool
 }
@@ -116,6 +119,12 @@ func (api ConfluenceApiService) UpsertPage(page UpsertPageContext) (string, stri
 	if page.IsUpdate() {
 		method = "PUT"
 		uri = uri + "/" + page.GetId()
+	}
+
+	labels := []Label{{Prefix: "global", Name: constants.GENERATED_BY_LABEL}}
+
+	for _, l := range page.GetLabels() {
+		labels = append(labels, Label{Prefix: "global", Name: l})
 	}
 
 	payload := ConfluenceContentPayload{
@@ -132,9 +141,12 @@ func (api ConfluenceApiService) UpsertPage(page UpsertPageContext) (string, stri
 			Value:          page.GetContent(),
 			Representation: "wiki",
 		}},
-		Metadata: Metadata{Properties{Editor{
-			Value: "V1",
-		}}},
+		Metadata: Metadata{
+			Properties{Editor{
+				Value: "V1",
+			}},
+			labels,
+		},
 	}
 
 	if page.GetAncestorId() != "" {
@@ -200,8 +212,8 @@ func (api ConfluenceApiService) SetLabels(contentId string, labels []string) err
 }
 
 func (api ConfluenceApiService) GetManagedContent() ([]ConfluencePageExpanded, string, error) {
-	cql := url.PathEscape(fmt.Sprintf(`label="generated_by=yaml2confluence" AND space.key="%s"`, api.spaceKey))
-	URI := fmt.Sprintf("/wiki/rest/api/content/search?cql=%s&expand=version,ancestors,metadata.properties.sha256&limit=20", cql)
+	cql := url.PathEscape(fmt.Sprintf(`label="%s" AND space.key="%s"`, constants.GENERATED_BY_LABEL, api.spaceKey))
+	URI := fmt.Sprintf("/wiki/rest/api/content/search?cql=%s&expand=version,ancestors,metadata.properties.sha256,metadata.labels&limit=20", cql)
 	sr, err := unmarshallResponse[ConfluenceSearchResultsResponse](api.request("GET", URI, nil))
 	if err != nil {
 		return nil, "", err
