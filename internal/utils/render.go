@@ -75,6 +75,7 @@ func (rt *RenderTools) RenderTo(target RenderTarget, p *resources.Page) {
 
 			p.Resource.Json = res
 		}
+		p.Resource.UpdateKindAndTitle()
 		fallthrough
 	case target == MST:
 		renderContent(p, rt.GetTemplate(p.Resource.Kind))

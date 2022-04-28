@@ -92,7 +92,7 @@ func (pt *PageTree) GetPage(key string) *Page {
 func (pt *PageTree) GetPageFromTitlePath(titles []string) *Page {
 	page := pt.rootPage
 	for _, title := range titles {
-		page = page.childrenByTitle[title]
+		page = page.GetChildByTitle(title)
 		if page == nil {
 			return nil
 		}

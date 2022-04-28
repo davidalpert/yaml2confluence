@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type requiredFields struct {
+type KindAndTitle struct {
 	Kind  string `yaml:"kind"`
 	Title string `yaml:"title"`
 }
@@ -28,7 +28,7 @@ func NewYamlResource(path string, node *yaml.Node) *YamlResource {
 	setHeadComment(path, node)
 	node.FootComment = "V2"
 
-	requiredFields := &requiredFields{}
+	requiredFields := &KindAndTitle{}
 	err := node.Decode(requiredFields)
 	if err != nil {
 		panic(err)
@@ -54,6 +54,18 @@ func (yr *YamlResource) UpdateJson() {
 	var buf bytes.Buffer
 	jsonEncoder.Encode(&buf, yr.Node)
 	yr.Json = buf.String()
+	yr.UpdateKindAndTitle()
+}
+
+// this is ugly, but it works for now
+func (yr *YamlResource) UpdateKindAndTitle() {
+	kindAndTitle := &KindAndTitle{}
+	if err := json.Unmarshal([]byte(yr.Json), &kindAndTitle); err != nil {
+		panic(err)
+	}
+
+	yr.Kind = kindAndTitle.Kind
+	yr.Title = kindAndTitle.Title
 }
 
 func (yr *YamlResource) ToObject() map[string]interface{} {

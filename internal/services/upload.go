@@ -37,7 +37,7 @@ func (us UploadSrv) UploadSpace(spaceDirectory string) {
 
 	yr := utils.LoadYamlResources(dirProps.SpaceDir)
 
-	if err := utils.EnsureRequiredFieldsAndUniqueTitles(yr); err != nil {
+	if err := utils.EnsureUniqueTitles(yr); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}

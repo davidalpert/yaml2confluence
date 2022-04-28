@@ -10,13 +10,13 @@ const (
 )
 
 type Page struct {
-	Key             string
-	Title           string
-	Resource        *YamlResource
-	Content         PageContent
-	Remote          *RemoteResource
-	Parent          *Page
-	childrenByTitle map[string]*Page
+	Key      string
+	Resource *YamlResource
+	Content  PageContent
+	Remote   *RemoteResource
+	Parent   *Page
+	// childrenByTitle map[string]*Page
+	Children []*Page
 }
 
 type PageContent struct {
@@ -25,11 +25,7 @@ type PageContent struct {
 }
 
 func NewPage(key string, yr *YamlResource) *Page {
-	title := ""
-	if yr != nil {
-		title = yr.Title
-	}
-	return &Page{Key: key, Title: title, Resource: yr, childrenByTitle: map[string]*Page{}}
+	return &Page{Key: key, Resource: yr}
 }
 
 func (p *Page) IsRoot() bool {
@@ -41,11 +37,16 @@ func (p *Page) GetParent() *Page {
 }
 
 func (p *Page) GetChildren() []*Page {
-	children := []*Page{}
-	for _, p := range p.childrenByTitle {
-		children = append(children, p)
+	return p.Children
+}
+
+func (p *Page) GetChildByTitle(title string) *Page {
+	for _, child := range p.Children {
+		if child.GetTitle() == title {
+			return child
+		}
 	}
-	return children
+	return nil
 }
 
 func (p *Page) GetKeyArray() []string {
@@ -66,7 +67,7 @@ func (parent *Page) AppendChild(p *Page) *Page {
 	}
 
 	p.Parent = parent
-	parent.childrenByTitle[p.Title] = p
+	parent.Children = append(parent.Children, p)
 
 	return p
 }
@@ -122,7 +123,7 @@ func (p *Page) GetId() string {
 	return p.GetRemoteId()
 }
 func (p *Page) GetTitle() string {
-	return p.Title
+	return p.Resource.Title
 }
 func (p *Page) GetAncestorId() string {
 	return p.GetParent().GetRemoteId()

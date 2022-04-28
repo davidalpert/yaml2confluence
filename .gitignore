@@ -5,3 +5,5 @@ notes.txt
 TODO.txt
 payload.json
 **/.secret
+internal/utils/yaml_test.go
+internal/utils/schema_validator.go

@@ -110,7 +110,7 @@ func TestLoadYamlResources(t *testing.T) {
 	compare(t, expected, actual)
 }
 
-func TestEnsureRequiredFieldsAndUniqueTitles(t *testing.T) {
+func TestEnsureUniqueTitles(t *testing.T) {
 	// test duplicate title
 	yr := []*resources.YamlResource{
 		resources.NewYamlResource("/app1.yml", createYamlNode("wiki", "test app 1")),
@@ -118,37 +118,12 @@ func TestEnsureRequiredFieldsAndUniqueTitles(t *testing.T) {
 		resources.NewYamlResource("/app3.yml", createYamlNode("wiki", "TEST APP 2")),
 	}
 
-	err := EnsureRequiredFieldsAndUniqueTitles(yr)
+	err := EnsureUniqueTitles(yr)
 	if err == nil {
 		t.Fatal(`Expected error, got nil`)
 	}
 
 	expectedErrMsg := fmt.Sprintf(DUPLICATE_TITLE, "test app 2", "/app2.yml", "TEST APP 2", "/app3.yml")
-	if err.Error() != expectedErrMsg {
-		t.Fatalf(`Expected error of "%s", got "%s"`, expectedErrMsg, err.Error())
-	}
-
-	resources.NewYamlResource("/app.yml", createYamlNode("", "app"))
-
-	// test kind is empty string
-	err = EnsureRequiredFieldsAndUniqueTitles([]*resources.YamlResource{resources.NewYamlResource("/app.yml", createYamlNode("", "app"))})
-	if err == nil {
-		t.Fatal(`Expected error, got nil`)
-	}
-
-	expectedErrMsg = fmt.Sprintf(MISSING_FIELD, "/app.yml", "kind")
-	if err.Error() != expectedErrMsg {
-		t.Fatalf(`Expected error of "%s", got "%s"`, expectedErrMsg, err.Error())
-	}
-
-	resources.NewYamlResource("/app.yml", createYamlNode("wiki", ""))
-	// test title is empty string
-	err = EnsureRequiredFieldsAndUniqueTitles([]*resources.YamlResource{resources.NewYamlResource("/app.yml", createYamlNode("wiki", ""))})
-	if err == nil {
-		t.Fatal(`Expected error, got nil`)
-	}
-
-	expectedErrMsg = fmt.Sprintf(MISSING_FIELD, "/app.yml", "title")
 	if err.Error() != expectedErrMsg {
 		t.Fatalf(`Expected error of "%s", got "%s"`, expectedErrMsg, err.Error())
 	}

@@ -4,7 +4,6 @@ import "github.com/NorthfieldIT/yaml2confluence/internal/resources"
 
 const (
 	COMMAND_NOT_FOUND = `"%s" command not found`
-	MISSING_FIELD     = `"%s" is missing required field: %s`
 	DUPLICATE_TITLE   = `Duplicate title found -- "%s" (%s/) matches "%s" (%s/)`
 )
 

@@ -61,6 +61,10 @@ func (yrl YamlResourceLoader) loadYamlResources(dir string) []*resources.YamlRes
 			relPath := path[dirStringLength:]
 
 			if info.IsDir() {
+				if ignoreDir(relPath) {
+					return filepath.SkipDir
+				}
+
 				yr := getDefaultDirYamlResource(relPath)
 
 				// save a pointer to the directory YamlResource for later in case an index.yml is found
@@ -113,6 +117,10 @@ func isIndexFile(file string) bool {
 	return IsYamlFile(file) && (name == "index" || name == "_index")
 }
 
+func ignoreDir(path string) bool {
+	return path[0:1] == "_"
+}
+
 func getDefaultDirYamlResource(relPath string) *resources.YamlResource {
 	pathTokens := strings.Split(relPath, string(os.PathSeparator))
 	title := pathTokens[len(pathTokens)-1:][0]
@@ -120,17 +128,10 @@ func getDefaultDirYamlResource(relPath string) *resources.YamlResource {
 	return resources.NewYamlResource(relPath, unmarshal([]byte(fmt.Sprintf("kind: wiki\ntitle: %s\nmarkup: \"\"", title))))
 }
 
-func EnsureRequiredFieldsAndUniqueTitles(yrs []*resources.YamlResource) error {
+func EnsureUniqueTitles(yrs []*resources.YamlResource) error {
 	uniqueTitle := map[string]*resources.YamlResource{}
 
 	for _, cur := range yrs {
-		if cur.Title == "" {
-			return errors.New(fmt.Sprintf(MISSING_FIELD, cur.Path, "title"))
-		}
-		if cur.Kind == "" {
-			return errors.New(fmt.Sprintf(MISSING_FIELD, cur.Path, "kind"))
-		}
-
 		lowerTitle := strings.ToLower(cur.Title)
 		if r, exists := uniqueTitle[lowerTitle]; exists {
 			return errors.New(fmt.Sprintf(DUPLICATE_TITLE, r.Title, r.Path, cur.Title, cur.Path))
