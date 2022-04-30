@@ -1,4 +1,4 @@
-package utils
+package resources
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
-	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
+	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,7 +20,7 @@ type YamlResourceLoader struct {
 func DefaultYamlResourceLoader() YamlResourceLoader {
 	return YamlResourceLoader{filepath.Walk, DefaultLoadYaml}
 }
-func LoadYamlResources(dir string) []*resources.YamlResource {
+func LoadYamlResources(dir string) []*YamlResource {
 	return DefaultYamlResourceLoader().loadYamlResources(dir)
 }
 
@@ -43,9 +43,9 @@ func unmarshal(data []byte) *yaml.Node {
 	return &node
 }
 
-func (yrl YamlResourceLoader) loadYamlResources(dir string) []*resources.YamlResource {
-	yrs := []*resources.YamlResource{}
-	parents := map[string]*resources.YamlResource{}
+func (yrl YamlResourceLoader) loadYamlResources(dir string) []*YamlResource {
+	yrs := []*YamlResource{}
+	parents := map[string]*YamlResource{}
 	dirStringLength := len(dir)
 
 	err := yrl.Walk(dir,
@@ -93,19 +93,19 @@ func (yrl YamlResourceLoader) loadYamlResources(dir string) []*resources.YamlRes
 	return yrs
 }
 
-func LoadSingleYamlResource(file string) *resources.YamlResource {
-	fileAbs := ResolveAbsolutePathFile(file)
+func LoadSingleYamlResource(file string) *YamlResource {
+	fileAbs := utils.ResolveAbsolutePathFile(file)
 	yrl := YamlResourceLoader{func(root string, fn filepath.WalkFunc) error {
 		file, _ := os.Stat(fileAbs)
 		fn(fileAbs, file, nil)
 		return nil
 	}, DefaultLoadYaml}
 
-	return yrl.loadYamlResources(GetDirectoryProperties(file).SpaceDir)[0]
+	return yrl.loadYamlResources(utils.GetDirectoryProperties(file).SpaceDir)[0]
 }
 
-func (yrl YamlResourceLoader) LoadYamlResource(spaceRootDir, relFilePath string) *resources.YamlResource {
-	return resources.NewYamlResource(relFilePath, unmarshal(yrl.LoadYaml(filepath.Join(spaceRootDir, relFilePath))))
+func (yrl YamlResourceLoader) LoadYamlResource(spaceRootDir, relFilePath string) *YamlResource {
+	return NewYamlResource(relFilePath, unmarshal(yrl.LoadYaml(filepath.Join(spaceRootDir, relFilePath))))
 }
 
 func IsYamlFile(file string) bool {
@@ -122,15 +122,15 @@ func ignoreDir(path string) bool {
 	return filepath.Base(path)[0:1] == "_"
 }
 
-func getDefaultDirYamlResource(relPath string) *resources.YamlResource {
+func getDefaultDirYamlResource(relPath string) *YamlResource {
 	pathTokens := strings.Split(relPath, string(os.PathSeparator))
 	title := pathTokens[len(pathTokens)-1:][0]
 
-	return resources.NewYamlResource(relPath, unmarshal([]byte(fmt.Sprintf("kind: wiki\ntitle: %s\nmarkup: \"\"", title))))
+	return NewYamlResource(relPath, unmarshal([]byte(fmt.Sprintf("kind: wiki\ntitle: %s\nmarkup: \"\"", title))))
 }
 
-func EnsureUniqueTitles(yrs []*resources.YamlResource) error {
-	uniqueTitle := map[string]*resources.YamlResource{}
+func EnsureUniqueTitles(yrs []*YamlResource) error {
+	uniqueTitle := map[string]*YamlResource{}
 
 	for _, cur := range yrs {
 		lowerTitle := strings.ToLower(cur.Title)

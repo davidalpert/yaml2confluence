@@ -1,31 +1,16 @@
-package hooks
+package resources
 
 import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
-	"strings"
 
 	. "github.com/flant/libjq-go"
 	"github.com/flant/libjq-go/pkg/jq"
 	"gopkg.in/yaml.v3"
 )
-
-const builtin = `target: .*
-priority: 100
-defaults:
-  kind: markup
-  labels: []
-yq: 
-  # Defaults 'title' to the relative path (stored in head_comment)
-  - '{} as $d|$d.title = (head_comment | capture("(.*)") .[])|. *n $d'
-  # Defaults 'editorVersion' to instance setting (stored in foot_comment)
-  - '{} as $d|$d.editorVersion = (foot_comment | capture("(.*)") .[])|. *n $d'
-  # Remove foot_comment (editorVersion)
-  - '. foot_comment=""'`
 
 type HookProcessor struct {
 	shouldPrecompile bool
@@ -34,8 +19,11 @@ type HookProcessor struct {
 }
 
 type Hook struct {
-	Name      string
-	Path      string
+	Asset  IAsset
+	Config *HookConfig
+}
+
+type HookConfig struct {
 	Target    string    `yaml:"target"`
 	Priority  int       `yaml:"priority"`
 	Defaults  yaml.Node `yaml:"defaults"`
@@ -81,11 +69,11 @@ func NewHookProcessor(hooksDir string, precompile bool) *HookProcessor {
 		kindHooks:        map[string]*Hook{},
 	}
 
-	hooks := append(loadHooks(hooksDir), loadBuiltinHook())
+	hooks := append(loadHooks(hooksDir))
 
 	for _, hook := range hooks {
-		if hook.Target == "" {
-			hp.kindHooks[hook.Name] = hook
+		if hook.Config.Target == "" {
+			hp.kindHooks[hook.Asset.GetName()] = hook
 		} else {
 			hp.patternHooks = append(hp.patternHooks, hook)
 		}
@@ -102,14 +90,23 @@ func (hp *HookProcessor) GetHooks(kind string) []*Hook {
 	}
 
 	for _, ph := range hp.patternHooks {
-		if matched, _ := regexp.MatchString(ph.Target, kind); matched {
+		if matched, _ := regexp.MatchString(ph.Config.Target, kind); matched {
 			hooks = append(hooks, ph)
 		}
 	}
 
 	sort.SliceStable(hooks, func(i, j int) bool {
-		return hooks[i].Priority < hooks[j].Priority
+		return hooks[i].Config.Priority < hooks[j].Config.Priority
 	})
+
+	return hooks
+}
+func (hp *HookProcessor) GetAll() []*Hook {
+	hooks := append([]*Hook{}, hp.patternHooks...)
+
+	for _, h := range hp.kindHooks {
+		hooks = append(hooks, h)
+	}
 
 	return hooks
 }
@@ -118,19 +115,19 @@ func (hp *HookProcessor) GetHookSet(kind string) HookSet {
 	hookset := HookSet{}
 
 	for _, hook := range hp.GetHooks(kind) {
-		for _, jq := range hook.Jq {
+		for _, jq := range hook.Config.Jq {
 			jqCommand := JqCommand{Cmd: jq, Hook: hook}
 			if hp.shouldPrecompile {
 				err := jqCommand.precompile()
 				if err != nil {
-					fmt.Printf("Failed to precompile jq statement\nHook name: %s\nFile: %s\njq: %s\nError: %s", hook.Name, hook.Path, jq, err.Error())
+					fmt.Printf("Failed to precompile jq statement\nHook name: %s\nFile: %s\njq: %s\nError: %s", hook.Asset.GetName(), hook.Asset.GetPath(), jq, err.Error())
 					os.Exit(1)
 				}
 			}
 			hookset.Jq = append(hookset.Jq, jqCommand)
 		}
 
-		yqHooks, err := NewYqHook(hook.Defaults, hook.Overrides, hook.Merges, hook.Yq)
+		yqHooks, err := NewYqHook(hook.Config.Defaults, hook.Config.Overrides, hook.Config.Merges, hook.Config.Yq)
 		if err != nil {
 			panic(err)
 		}
@@ -144,49 +141,28 @@ func (hp *HookProcessor) GetHookSet(kind string) HookSet {
 
 func loadHooks(hooksDir string) []*Hook {
 	hooks := []*Hook{}
-	err := filepath.Walk(hooksDir,
-		func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				panic(err)
-			}
 
-			if info.IsDir() {
-				return nil
-			}
+	assets := append(GetBuiltinHooks(), LoadAssets(hooksDir, []string{".yml", ".yaml"})...)
 
-			hook, err := loadHookFromFilePath(path)
-			if err != nil {
-				panic(err)
-			}
-			hooks = append(hooks, hook)
-			return nil
-		})
-	if err != nil {
-		panic(err)
+	for _, asset := range assets {
+		config, err := loadHookConfig(asset.ReadBytes())
+		if err != nil {
+			panic(err)
+		}
+
+		hook := Hook{
+			Asset:  asset,
+			Config: config,
+		}
+
+		hooks = append(hooks, &hook)
 	}
 
 	return hooks
 }
 
-func loadHookFromFilePath(path string) (*Hook, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-
-	hook, err := loadHook(data)
-	if err != nil {
-		panic(err)
-	}
-
-	hook.Name = fileNameWithoutExtension(path)
-	hook.Path = path
-
-	return hook, nil
-}
-
-func loadHook(data []byte) (*Hook, error) {
-	hook := Hook{}
+func loadHookConfig(data []byte) (*HookConfig, error) {
+	hookConfig := HookConfig{}
 
 	node := yaml.Node{}
 	yaml.Unmarshal(data, &node)
@@ -198,12 +174,12 @@ func loadHook(data []byte) (*Hook, error) {
 	ensureArray("yq", &node)
 	ensureArray("jq", &node)
 
-	err := node.Decode(&hook)
+	err := node.Decode(&hookConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return &hook, nil
+	return &hookConfig, nil
 }
 
 /*
@@ -228,18 +204,4 @@ func ensureArray(rootKey string, node *yaml.Node) {
 			break
 		}
 	}
-}
-
-func fileNameWithoutExtension(path string) string {
-	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-}
-
-func loadBuiltinHook() *Hook {
-	hook, err := loadHook([]byte(builtin))
-	if err != nil {
-		panic(err)
-	}
-	hook.Name = "builtin"
-
-	return hook
 }

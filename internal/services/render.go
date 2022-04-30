@@ -20,24 +20,24 @@ func NewRenderService() RenderSrv {
 
 func (RenderSrv) RenderSingleResource(file string, output string) {
 	dirProps := utils.GetDirectoryProperties(file)
-	yr := utils.LoadSingleYamlResource(file)
+	yr := resources.LoadSingleYamlResource(file)
 	page := resources.NewPage(yr.Path, yr)
-	rt := utils.NewRenderTools(dirProps, true)
+	rt := resources.NewRenderTools(dirProps, true)
 
 	target := getRenderTarget(output)
 	rt.RenderTo(target, page)
 
-	utils.PrettyPrint(target, page, os.Stdout)
+	resources.PrettyPrint(target, page, os.Stdout)
 }
 
-func getRenderTarget(output string) utils.RenderTarget {
+func getRenderTarget(output string) resources.RenderTarget {
 	lower := strings.ToLower(output)
 	switch lower {
 	case "json":
-		return utils.JSON
+		return resources.JSON
 	case "yaml":
-		return utils.YAML
+		return resources.YAML
 	default:
-		return utils.MST
+		return resources.MST
 	}
 }

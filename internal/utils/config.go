@@ -74,7 +74,10 @@ func GenerateSecret() string {
 func GetDirectoryProperties(path string) DirectoryProperties {
 	dirTokens := strings.Split(ResolveAbsolutePathFile(path), "spaces/")
 	baseDir := dirTokens[0]
-	spaceKey := strings.Split(dirTokens[1], "/")[0]
+	spaceKey := ""
+	if len(dirTokens) == 2 {
+		spaceKey = strings.Split(dirTokens[1], "/")[0]
+	}
 
 	props := DirectoryProperties{}
 	props.ConfigPath = filepath.Join(baseDir, "config.yml")

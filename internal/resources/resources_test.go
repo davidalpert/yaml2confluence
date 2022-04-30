@@ -1,4 +1,4 @@
-package utils
+package resources
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
-	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
 	"gopkg.in/yaml.v3"
 )
 
@@ -50,7 +49,7 @@ func createYamlNode(kind string, title string) *yaml.Node {
 	return unmarshal([]byte(fmt.Sprintf("kind: %s\ntitle: %s", kind, title)))
 }
 
-func compare(t *testing.T, expected []*resources.YamlResource, actual []*resources.YamlResource) {
+func compare(t *testing.T, expected []*YamlResource, actual []*YamlResource) {
 	if len(expected) != len(actual) {
 		t.Fatalf("Expected exactly %d YamlResources, got %d\n%s", len(expected), len(actual), printYamlResources(expected, actual))
 	}
@@ -70,7 +69,7 @@ func compare(t *testing.T, expected []*resources.YamlResource, actual []*resourc
 	}
 }
 
-func printYamlResources(e []*resources.YamlResource, a []*resources.YamlResource) string {
+func printYamlResources(e []*YamlResource, a []*YamlResource) string {
 	output := "\texpected:\n"
 	for _, yr := range e {
 		output = output + "\t\t" + fmt.Sprint(yr) + "\n"
@@ -93,12 +92,12 @@ func TestLoadYamlResources(t *testing.T) {
 		{"/home/user/confluence/spaces/DEMO/freeform.yml", false, "wiki", "Wiki Example"},
 	}
 
-	expected := []*resources.YamlResource{
-		resources.NewYamlResource("/apps", createYamlNode("index", "Applications")),
-		resources.NewYamlResource("/apps/app1.yml", createYamlNode("application", "Test Application 1")),
-		resources.NewYamlResource("/apps/nested", createYamlNode("wiki", "nested")),
-		resources.NewYamlResource("/apps/nested/app2.yml", createYamlNode("application", "Test Application 2")),
-		resources.NewYamlResource("/freeform.yml", createYamlNode("wiki", "Wiki Example")),
+	expected := []*YamlResource{
+		NewYamlResource("/apps", createYamlNode("index", "Applications")),
+		NewYamlResource("/apps/app1.yml", createYamlNode("application", "Test Application 1")),
+		NewYamlResource("/apps/nested", createYamlNode("wiki", "nested")),
+		NewYamlResource("/apps/nested/app2.yml", createYamlNode("application", "Test Application 2")),
+		NewYamlResource("/freeform.yml", createYamlNode("wiki", "Wiki Example")),
 	}
 
 	yrl := YamlResourceLoader{
@@ -113,10 +112,10 @@ func TestLoadYamlResources(t *testing.T) {
 
 func TestEnsureUniqueTitles(t *testing.T) {
 	// test duplicate title
-	yr := []*resources.YamlResource{
-		resources.NewYamlResource("/app1.yml", createYamlNode("wiki", "test app 1")),
-		resources.NewYamlResource("/app2.yml", createYamlNode("wiki", "test app 2")),
-		resources.NewYamlResource("/app3.yml", createYamlNode("wiki", "TEST APP 2")),
+	yr := []*YamlResource{
+		NewYamlResource("/app1.yml", createYamlNode("wiki", "test app 1")),
+		NewYamlResource("/app2.yml", createYamlNode("wiki", "test app 2")),
+		NewYamlResource("/app3.yml", createYamlNode("wiki", "TEST APP 2")),
 	}
 
 	err := EnsureUniqueTitles(yr)

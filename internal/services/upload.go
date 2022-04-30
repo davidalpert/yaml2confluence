@@ -42,16 +42,16 @@ func (us UploadSrv) UploadSpace(spaceDirectory string) {
 	config := confluence.LoadConfig(dirProps.ConfigPath)
 	api := confluence.NewConfluenceApiService(dirProps.SpaceKey, config)
 
-	yr := utils.LoadYamlResources(dirProps.SpaceDir)
+	yr := resources.LoadYamlResources(dirProps.SpaceDir)
 
-	if err := utils.EnsureUniqueTitles(yr); err != nil {
+	if err := resources.EnsureUniqueTitles(yr); err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	pt := resources.NewPageTree(yr, utils.GetAnchor(spaceDirectory))
+	pt := resources.NewPageTree(yr, resources.GetAnchor(spaceDirectory))
 
-	utils.NewRenderTools(dirProps, true).RenderAll(pt)
+	resources.NewRenderTools(dirProps, true).RenderAll(pt)
 	spaceExists, err := api.CreateSpaceIfNotExists()
 	if err != nil {
 		fmt.Println(err.Error())

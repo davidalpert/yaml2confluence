@@ -1,4 +1,4 @@
-package utils
+package resources
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
 	"github.com/aybabtme/orderedjson"
 	"github.com/mattn/go-colorable"
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
@@ -16,7 +15,7 @@ import (
 )
 
 var yamlEncoder yqlib.Encoder
-var jsonEncoder yqlib.Encoder
+var prettyJsonEncoder yqlib.Encoder
 
 func init() {
 	// disable yqlib debug logging
@@ -24,11 +23,11 @@ func init() {
 	leveled.SetLevel(logging.ERROR, "")
 	yqlib.GetLogger().SetBackend(leveled)
 
-	jsonEncoder = yqlib.NewJONEncoder(4)
+	prettyJsonEncoder = yqlib.NewJONEncoder(4)
 	// YamlPrinter = yqlib.NewPrinter(yqlib.NewYamlEncoder(indent, colorsEnabled, printDocSeparators, unwrapScalar), yqlib.NewSinglePrinterWriter(writer))
 }
 
-func PrettyPrint(target RenderTarget, page *resources.Page, w *os.File) {
+func PrettyPrint(target RenderTarget, page *Page, w *os.File) {
 	switch target {
 	case YAML:
 		prettyPrintYaml(page.Resource.Node, w)
