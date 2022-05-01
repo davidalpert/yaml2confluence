@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,8 +41,15 @@ func (a Asset) ReadBytes() []byte {
 	return data
 }
 
-func LoadAssets(dir string, exts []string) []IAsset {
+func LoadAssets(dir string, exts []string, optional bool) []IAsset {
 	assets := []IAsset{}
+
+	if optional {
+		if stat, err := os.Stat(dir); errors.Is(err, os.ErrNotExist) || !stat.IsDir() {
+			return assets
+		}
+	}
+
 	err := filepath.Walk(dir,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {

@@ -13,6 +13,7 @@ import (
 type InstanceConfig struct {
 	Name       string
 	Type       string
+	Protocol   string
 	Host       string
 	API_prefix string
 	User       string
@@ -31,6 +32,10 @@ func LoadConfig(file string) InstanceConfig {
 	err = yaml.Unmarshal([]byte(data), &ic)
 	if err != nil {
 		panic(err)
+	}
+
+	if ic.Protocol == "" {
+		ic.Protocol = "https"
 	}
 
 	secret, err := utils.GetSecret()

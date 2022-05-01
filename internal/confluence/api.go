@@ -25,26 +25,47 @@ type ConfluenceApiService struct {
 	config   InstanceConfig
 	spaceKey string
 	client   http.Client
+	authKey  string
+	isCloud  bool
 }
 type NoOpResponse struct{}
 type ConfluenceResponse interface {
-	ConfluenceContentResponse | ConfluenceSearchResultsResponse | NoOpResponse
+	ConfluenceContentResponse | ConfluenceSearchResultsResponse | ConfluenceSpaceResponse | NoOpResponse
 }
 
 func NewConfluenceApiService(spaceKey string, config InstanceConfig) ConfluenceApiService {
-	return ConfluenceApiService{config, spaceKey, http.Client{
-		Timeout: time.Second * 10,
-	}}
+	authKey := config.API_token
+	isCloud := true
+	if config.Type == "server" {
+		authKey = config.Password
+		isCloud = false
+	}
+	fmt.Println(authKey)
+	return ConfluenceApiService{
+		config:   config,
+		spaceKey: spaceKey,
+		client: http.Client{
+			Timeout: time.Second * 10,
+		},
+		authKey: authKey,
+		isCloud: isCloud,
+	}
 }
-
+func (api ConfluenceApiService) IsCloudInstance() bool {
+	return api.isCloud
+}
+func (api ConfluenceApiService) IsServerInstance() bool {
+	return !api.isCloud
+}
 func (api ConfluenceApiService) request(method string, URI string, body []byte) (*http.Response, error) {
-	URL := "https://" + api.config.Host + filepath.Join(api.config.API_prefix, URI)
+	URL := api.config.Protocol + "://" + api.config.Host + filepath.Join(api.config.API_prefix, URI)
 	req, err := http.NewRequest(method, URL, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(api.config.User, api.config.API_token)
+
+	req.SetBasicAuth(api.config.User, api.authKey)
 
 	resp, err := api.client.Do(req)
 	if err != nil {
@@ -80,11 +101,11 @@ func unmarshallResponse[T ConfluenceResponse](resp *http.Response, err error) (T
 	return result, nil
 }
 
-func (api ConfluenceApiService) CreateSpaceIfNotExists() (bool, error) {
+func (api ConfluenceApiService) CreateSpaceIfNotExists() (bool, string, error) {
 	// check is space exists already, if so, return
-	_, err := api.request("GET", fmt.Sprintf("/space/%s", api.spaceKey), nil)
+	content, err := unmarshallResponse[ConfluenceSpaceResponse](api.request("GET", fmt.Sprintf("/space/%s?expand=homepage", api.spaceKey), nil))
 	if err == nil {
-		return true, nil
+		return true, content.Homepage.Id, nil
 	}
 
 	payload := ConfluenceSpacePayload{
@@ -94,12 +115,12 @@ func (api ConfluenceApiService) CreateSpaceIfNotExists() (bool, error) {
 
 	postBody, _ := json.Marshal(payload)
 
-	_, err = api.request("POST", "/space/", postBody)
+	content, err = unmarshallResponse[ConfluenceSpaceResponse](api.request("POST", "/space/", postBody))
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 
-	return false, nil
+	return false, content.Homepage.Id, nil
 
 }
 
@@ -169,6 +190,13 @@ func (api ConfluenceApiService) UpsertPage(page UpsertPageContext) (string, stri
 func (api ConfluenceApiService) DeletePage(id string) error {
 	_, err := api.request("DELETE", fmt.Sprintf("/content/%s", id), nil)
 
+	// Confluence Server will mark a page as trashed on deletion
+	// That page can then linger in the system for a few seconds, causing title collisions on page moves
+	// Blindly attempt to permanently delete the trashed content, we don't care if this works or not
+	if api.IsServerInstance() {
+		api.request("DELETE", fmt.Sprintf("/content/%s?status=trashed", id), nil)
+	}
+
 	return err
 }
 
@@ -215,6 +243,7 @@ func (api ConfluenceApiService) SetLabels(contentId string, labels []string) err
 func (api ConfluenceApiService) GetManagedContent() ([]ConfluencePageExpanded, string, error) {
 	cql := url.PathEscape(fmt.Sprintf(`label="%s" AND space.key="%s"`, constants.GENERATED_BY_LABEL, api.spaceKey))
 	URI := fmt.Sprintf("/content/search?cql=%s&expand=version,ancestors,metadata.properties.sha256,metadata.labels&limit=20", cql)
+
 	sr, err := unmarshallResponse[ConfluenceSearchResultsResponse](api.request("GET", URI, nil))
 	if err != nil {
 		return nil, "", err

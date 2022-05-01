@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/NorthfieldIT/yaml2confluence/internal/confluence"
+	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
 	"github.com/NorthfieldIT/yaml2confluence/internal/resources"
 	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
 )
@@ -52,12 +53,17 @@ func (us UploadSrv) UploadSpace(spaceDirectory string) {
 	pt := resources.NewPageTree(yr, resources.GetAnchor(spaceDirectory))
 
 	resources.NewRenderTools(dirProps, true).RenderAll(pt)
-	spaceExists, err := api.CreateSpaceIfNotExists()
+	spaceExisted, id, err := api.CreateSpaceIfNotExists()
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	if spaceExists {
+
+	if !pt.HasAnchor() {
+		pt.SetAnchor(id)
+	}
+
+	if spaceExisted {
 		pages, base, err := api.GetManagedContent()
 		if err != nil {
 			fmt.Printf("Failed to retrieve managed content from %s space\n%s\n", dirProps.SpaceKey, err.Error())
@@ -119,21 +125,27 @@ func update(api confluence.ConfluenceApiService, changes [][]resources.PageUpdat
 					page.Remote = &resources.RemoteResource{Id: id, Link: link}
 				}
 
-				extraCalls := []func(){
-					func() {
+				extraCalls := []func(){}
+
+				if change.Operation == resources.CREATE || page.Sha256Differs() {
+					extraCalls = append(extraCalls, func() {
 						err = api.UpsertProperty(page.GetSha256Property())
 						if err != nil {
 							log.Fatal(err)
 						}
-					},
-					// func() {
-					// 	err = api.SetLabels(id, []string{"generated_by=yaml2confluence"})
-					// 	if err != nil {
-					// 		log.Fatal(err)
-					// 	}
-					// },
+					})
 				}
-				utils.EachLimit(len(extraCalls), 1, func(index int) { extraCalls[index]() })
+
+				if api.IsServerInstance() && (change.Operation == resources.CREATE || page.LabelsDiffer()) {
+					extraCalls = append(extraCalls, func() {
+						err = api.SetLabels(id, append([]string{constants.GENERATED_BY_LABEL}, page.GetLabels()...))
+						if err != nil {
+							log.Fatal(err)
+						}
+					})
+				}
+
+				utils.EachLimit(len(extraCalls), 2, func(index int) { extraCalls[index]() })
 
 				op := CHANGE_VERBS[change.Operation]
 				if change.Operation == resources.UPDATE && !page.Sha256Differs() && page.LabelsDiffer() {

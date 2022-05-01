@@ -107,3 +107,8 @@ type ConfluencePage struct {
 	Id    string
 	Title string
 }
+type ConfluenceSpaceResponse struct {
+	Homepage struct {
+		Id string
+	}
+}

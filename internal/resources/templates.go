@@ -48,7 +48,7 @@ func (tp TemplateProcessor) GetAll() []Template {
 func loadAllTemplates(templatesDir string) map[string]Template {
 	templates := map[string]Template{}
 
-	assets := append(GetBuiltinTemplates(), LoadAssets(templatesDir, []string{".mst", ".mustache"})...)
+	assets := append(GetBuiltinTemplates(), LoadAssets(templatesDir, []string{".mst", ".mustache"}, false)...)
 
 	for _, asset := range assets {
 		templates[asset.GetName()] = Template{Asset: asset}

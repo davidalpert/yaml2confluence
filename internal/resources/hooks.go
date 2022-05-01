@@ -142,7 +142,7 @@ func (hp *HookProcessor) GetHookSet(kind string) HookSet {
 func loadHooks(hooksDir string) []*Hook {
 	hooks := []*Hook{}
 
-	assets := append(GetBuiltinHooks(), LoadAssets(hooksDir, []string{".yml", ".yaml"})...)
+	assets := append(GetBuiltinHooks(), LoadAssets(hooksDir, []string{".yml", ".yaml"}, true)...)
 
 	for _, asset := range assets {
 		config, err := loadHookConfig(asset.ReadBytes())

@@ -6,7 +6,6 @@ import (
 
 type PageTree struct {
 	rootPage *Page
-	anchor   string
 	pages    map[string]*Page
 	deletes  [][]PageUpdate
 }
@@ -17,12 +16,11 @@ type PageUpdate struct {
 }
 
 func NewPageTree(yr []*YamlResource, anchor string) *PageTree {
-	pageTree := &PageTree{anchor: anchor}
+	pageTree := &PageTree{}
 
 	pageTree.rootPage = NewPage("/", nil)
-	if anchor != "" {
-		pageTree.rootPage.Remote = &RemoteResource{Id: anchor}
-	}
+	pageTree.SetAnchor(anchor)
+
 	pageTree.pages = map[string]*Page{
 		"/": pageTree.rootPage,
 	}
@@ -34,6 +32,26 @@ func NewPageTree(yr []*YamlResource, anchor string) *PageTree {
 	return pageTree
 }
 
+func (pt *PageTree) GetAnchor() string {
+	if pt.rootPage.Remote == nil {
+		return ""
+	}
+
+	return pt.rootPage.Remote.Id
+}
+
+func (pt *PageTree) SetAnchor(id string) {
+	if pt.rootPage.Remote == nil {
+		pt.rootPage.Remote = &RemoteResource{}
+	}
+
+	pt.rootPage.Remote.Id = id
+}
+
+func (pt *PageTree) HasAnchor() bool {
+	return pt.GetAnchor() != ""
+}
+
 type orphanPage struct {
 	depth  int
 	remote *RemoteResource
@@ -43,7 +61,7 @@ func (pt *PageTree) AddRemotes(remotes []*RemoteResource) {
 	orphans := []orphanPage{}
 
 	for _, remote := range remotes {
-		titlePath := remote.GetTitlePath(pt.anchor)
+		titlePath := remote.GetTitlePath(pt.GetAnchor())
 		page := pt.GetPageFromTitlePath(titlePath)
 		if page != nil {
 			page.Remote = remote
