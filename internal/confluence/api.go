@@ -40,7 +40,7 @@ func NewConfluenceApiService(spaceKey string, config InstanceConfig) ConfluenceA
 		authKey = config.Password
 		isCloud = false
 	}
-	fmt.Println(authKey)
+
 	return ConfluenceApiService{
 		config:   config,
 		spaceKey: spaceKey,
