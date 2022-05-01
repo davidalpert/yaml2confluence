@@ -75,7 +75,12 @@ func (rt *RenderTools) RenderTo(target RenderTarget, p *Page) {
 		p.Resource.UpdateKindAndTitle()
 		fallthrough
 	case target == MST:
-		renderContent(p, rt.templates.Get(p.Resource.Kind))
+		template, err := rt.templates.Get(p.Resource.Kind)
+		if err != nil {
+			fmt.Printf("Failed to render %s\n%s", filepath.Join(rt.dirProps.SpaceDir, p.Resource.Path), err.Error())
+			os.Exit(1)
+		}
+		renderContent(p, template)
 	}
 }
 

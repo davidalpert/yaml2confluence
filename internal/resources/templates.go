@@ -1,8 +1,8 @@
 package resources
 
 import (
+	"errors"
 	"fmt"
-	"os"
 )
 
 type TemplateProcessor struct {
@@ -22,19 +22,18 @@ func NewTemplateProcessor(templatesDir string) *TemplateProcessor {
 	return &tp
 }
 
-func (tp TemplateProcessor) Get(kind string) string {
+func (tp TemplateProcessor) Get(kind string) (string, error) {
 	template, exists := tp.templates[kind]
 
 	if !exists {
-		fmt.Printf("No template exists for kind '%s'\n", kind)
-		os.Exit(1)
+		return "", errors.New(fmt.Sprintf("No template exists for kind '%s'\n", kind))
 	}
 
 	if template.Data == "" {
 		template.Data = template.Asset.ReadString()
 	}
 
-	return template.Data
+	return template.Data, nil
 }
 
 func (tp TemplateProcessor) GetAll() []Template {

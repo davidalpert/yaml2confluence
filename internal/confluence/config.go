@@ -11,10 +11,13 @@ import (
 )
 
 type InstanceConfig struct {
-	Name      string
-	Host      string
-	User      string
-	API_token string
+	Name       string
+	Type       string
+	Host       string
+	API_prefix string
+	User       string
+	API_token  string `yaml:"api_token,omitempty"`
+	Password   string `yaml:"password,omitempty"`
 }
 
 func LoadConfig(file string) InstanceConfig {
@@ -35,13 +38,22 @@ func LoadConfig(file string) InstanceConfig {
 		fmt.Println("Could not find .secret")
 		os.Exit(1)
 	}
-	decryptedToken, err := utils.Decrypt(strings.Split(ic.API_token, ":")[1], secret)
+	var authPointer *string
+	var errMsg string
+	if ic.Type == "cloud" {
+		authPointer = &ic.API_token
+		errMsg = "Could not decrypt API token"
+	} else {
+		authPointer = &ic.Password
+		errMsg = "Could not decrypt password"
+	}
+	decryptedToken, err := utils.Decrypt(strings.Split(*authPointer, ":")[1], secret)
 	if err != nil {
-		fmt.Println("Could not decrypt API token")
+		fmt.Println(errMsg)
 		os.Exit(1)
 	}
 
-	ic.API_token = strings.TrimFunc(decryptedToken, func(r rune) bool {
+	*authPointer = strings.TrimFunc(decryptedToken, func(r rune) bool {
 		return !unicode.IsGraphic(r)
 	})
 

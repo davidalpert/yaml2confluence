@@ -1,4 +1,6 @@
 name: yaml2confluence
+type: cloud
 host: yaml2confluence.atlassian.net
+api_prefix: /wiki/rest/api
 user: glopal@gmail.com
 api_token: AES_ENC:0URbS0oinQntqMzRjPCuZ5+UTrICPnQhF+hRewNhfvdjW2KMIznerw==

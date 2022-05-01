@@ -25,11 +25,18 @@ func (InstancesSrv) New(baseDir string, configOnly bool) {
 	instance := cli.NewInstanceWizard()
 	secret := utils.GetSecretAndGenerateIfMissing()
 
-	encryptedToken, err := utils.Encrypt(instance.API_token, secret)
+	var authPointer *string
+	if instance.Type == "cloud" {
+		authPointer = &instance.API_token
+	} else {
+		authPointer = &instance.Password
+	}
+
+	encryptedToken, err := utils.Encrypt(*authPointer, secret)
 	if err != nil {
 		panic(err)
 	}
-	instance.API_token = "AES_ENC:" + encryptedToken
+	*authPointer = "AES_ENC:" + encryptedToken
 
 	configYaml, err := yaml.Marshal(&instance)
 	if err != nil {

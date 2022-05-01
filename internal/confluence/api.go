@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"time"
 
 	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
@@ -37,7 +38,7 @@ func NewConfluenceApiService(spaceKey string, config InstanceConfig) ConfluenceA
 }
 
 func (api ConfluenceApiService) request(method string, URI string, body []byte) (*http.Response, error) {
-	URL := "https://" + api.config.Host + URI
+	URL := "https://" + api.config.Host + filepath.Join(api.config.API_prefix, URI)
 	req, err := http.NewRequest(method, URL, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
@@ -81,7 +82,7 @@ func unmarshallResponse[T ConfluenceResponse](resp *http.Response, err error) (T
 
 func (api ConfluenceApiService) CreateSpaceIfNotExists() (bool, error) {
 	// check is space exists already, if so, return
-	_, err := api.request("GET", fmt.Sprintf("/wiki/rest/api/space/%s", api.spaceKey), nil)
+	_, err := api.request("GET", fmt.Sprintf("/space/%s", api.spaceKey), nil)
 	if err == nil {
 		return true, nil
 	}
@@ -93,7 +94,7 @@ func (api ConfluenceApiService) CreateSpaceIfNotExists() (bool, error) {
 
 	postBody, _ := json.Marshal(payload)
 
-	_, err = api.request("POST", "/wiki/rest/api/space/", postBody)
+	_, err = api.request("POST", "/space/", postBody)
 	if err != nil {
 		return false, err
 	}
@@ -114,7 +115,7 @@ type UpsertPageContext interface {
 
 func (api ConfluenceApiService) UpsertPage(page UpsertPageContext) (string, string, error) {
 	method := "POST"
-	uri := "/wiki/rest/api/content"
+	uri := "/content"
 
 	if page.IsUpdate() {
 		method = "PUT"
@@ -166,7 +167,7 @@ func (api ConfluenceApiService) UpsertPage(page UpsertPageContext) (string, stri
 }
 
 func (api ConfluenceApiService) DeletePage(id string) error {
-	_, err := api.request("DELETE", fmt.Sprintf("/wiki/rest/api/content/%s", id), nil)
+	_, err := api.request("DELETE", fmt.Sprintf("/content/%s", id), nil)
 
 	return err
 }
@@ -195,7 +196,7 @@ func (api ConfluenceApiService) UpsertProperty(property UpsertPropertyContext) e
 
 	postBody, _ := json.Marshal(payload)
 
-	_, err := api.request(method, fmt.Sprintf("/wiki/rest/api/content/%s/property/%s", property.GetId(), property.GetKey()), postBody)
+	_, err := api.request(method, fmt.Sprintf("/content/%s/property/%s", property.GetId(), property.GetKey()), postBody)
 
 	return err
 }
@@ -206,14 +207,14 @@ func (api ConfluenceApiService) SetLabels(contentId string, labels []string) err
 		payload = append(payload, Label{"global", label})
 	}
 	postBody, _ := json.Marshal(payload)
-	_, err := api.request("POST", fmt.Sprintf("/wiki/rest/api/content/%s/label", contentId), postBody)
+	_, err := api.request("POST", fmt.Sprintf("/content/%s/label", contentId), postBody)
 
 	return err
 }
 
 func (api ConfluenceApiService) GetManagedContent() ([]ConfluencePageExpanded, string, error) {
 	cql := url.PathEscape(fmt.Sprintf(`label="%s" AND space.key="%s"`, constants.GENERATED_BY_LABEL, api.spaceKey))
-	URI := fmt.Sprintf("/wiki/rest/api/content/search?cql=%s&expand=version,ancestors,metadata.properties.sha256,metadata.labels&limit=20", cql)
+	URI := fmt.Sprintf("/content/search?cql=%s&expand=version,ancestors,metadata.properties.sha256,metadata.labels&limit=20", cql)
 	sr, err := unmarshallResponse[ConfluenceSearchResultsResponse](api.request("GET", URI, nil))
 	if err != nil {
 		return nil, "", err
