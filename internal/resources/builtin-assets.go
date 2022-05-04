@@ -6,7 +6,7 @@ var templates map[string]string = map[string]string{
 
 var hooks map[string]string = map[string]string{
 	"required-fields": `target: .*
-priority: 100
+priority: -1
 defaults:
    kind: wiki
    labels: []
