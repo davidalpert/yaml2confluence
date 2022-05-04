@@ -22,14 +22,15 @@ Options:
 }
 
 func (hc HooksCmd) Handler(args docopt.Opts) {
+	dir := ToString(args["<instance_or_space_directory>"])
+	if dir == "" {
+		dir = "."
+	}
+
 	if args["list"].(bool) {
-		dir := ToString(args["<instance_or_space_directory>"])
-		if dir == "" {
-			dir = "."
-		}
 		hc.service.List(dir)
 	} else if args["show"].(bool) {
-		hc.service.Show(ToString(args["<name>"]), ToString(args["<instance_or_space_directory>"]))
+		hc.service.Show(ToString(args["<name>"]), dir)
 	}
 }
 

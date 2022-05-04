@@ -22,14 +22,15 @@ Options:
 }
 
 func (tc TemplatesCmd) Handler(args docopt.Opts) {
+	dir := ToString(args["<instance_or_space_directory>"])
+	if dir == "" {
+		dir = "."
+	}
+
 	if args["list"].(bool) {
-		dir := ToString(args["<instance_or_space_directory>"])
-		if dir == "" {
-			dir = "."
-		}
 		tc.service.List(dir)
 	} else if args["show"].(bool) {
-		tc.service.Show(ToString(args["<name>"]), ToString(args["<instance_or_space_directory>"]))
+		tc.service.Show(ToString(args["<name>"]), dir)
 	}
 }
 
