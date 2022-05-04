@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/NorthfieldIT/yaml2confluence/internal/constants"
@@ -242,7 +243,7 @@ func (api ConfluenceApiService) SetLabels(contentId string, labels []string) err
 
 func (api ConfluenceApiService) GetManagedContent() ([]ConfluencePageExpanded, string, error) {
 	cql := url.PathEscape(fmt.Sprintf(`label="%s" AND space.key="%s"`, constants.GENERATED_BY_LABEL, api.spaceKey))
-	URI := fmt.Sprintf("/content/search?cql=%s&expand=version,ancestors,metadata.properties.sha256,metadata.labels&limit=20", cql)
+	URI := fmt.Sprintf("/content/search?cql=%s&expand=version,ancestors,metadata.properties.sha256,metadata.labels&limit=80", cql)
 
 	sr, err := unmarshallResponse[ConfluenceSearchResultsResponse](api.request("GET", URI, nil))
 	if err != nil {
@@ -252,7 +253,9 @@ func (api ConfluenceApiService) GetManagedContent() ([]ConfluencePageExpanded, s
 	pages := sr.Results
 
 	for sr.Links.Next != "" {
-		sr, err := unmarshallResponse[ConfluenceSearchResultsResponse](api.request("GET", sr.Links.Context+sr.Links.Next, nil))
+		nextUri := "/content" + strings.Split(sr.Links.Next, "/content")[1]
+
+		sr, err = unmarshallResponse[ConfluenceSearchResultsResponse](api.request("GET", nextUri, nil))
 		if err != nil {
 			return nil, "", err
 		}
