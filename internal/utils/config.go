@@ -86,6 +86,8 @@ func GetDirectoryProperties(path string) DirectoryProperties {
 	props.TemplatesDir = filepath.Join(baseDir, "templates")
 	props.HooksDir = filepath.Join(baseDir, "hooks")
 
+	os.Setenv("SPACE_DIR", props.SpaceDir)
+
 	if _, err := os.Stat(props.ConfigPath); errors.Is(err, os.ErrNotExist) {
 		fmt.Println("Could not find config.yml")
 		os.Exit(1)
