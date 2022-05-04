@@ -8,7 +8,7 @@ var hooks map[string]string = map[string]string{
 	"required-fields": `target: .*
 priority: 100
 defaults:
-   kind: markup
+   kind: wiki
    labels: []
 yq: 
    # Defaults 'title' to the relative path (stored in head_comment)
