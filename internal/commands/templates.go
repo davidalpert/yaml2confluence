@@ -10,30 +10,27 @@ type TemplatesCmd struct {
 	service services.ITemplatesSrv
 }
 
-func (ic TemplatesCmd) Usage() string {
+func (tc TemplatesCmd) Usage() string {
 	return `
 Usage:
 	y2c templates list [<instance_or_space_directory>]
-	y2c templates show [<instance_or_space_directory>] <name>
+	y2c templates show <name> [<instance_or_space_directory>] 
 
 Options:
 	<name> 		The name of the template to show
 `
 }
 
-func (ic TemplatesCmd) Handler(args docopt.Opts) {
+func (tc TemplatesCmd) Handler(args docopt.Opts) {
 	if args["list"].(bool) {
 		dir := ToString(args["<instance_or_space_directory>"])
 		if dir == "" {
 			dir = "."
 		}
-		ic.service.List(dir)
+		tc.service.List(dir)
+	} else if args["show"].(bool) {
+		tc.service.Show(ToString(args["<name>"]), ToString(args["<instance_or_space_directory>"]))
 	}
-	// if spaceDir := ToString(args["<space_directory>"]); spaceDir != "" {
-	// 	ic.service.UploadSpace(spaceDir)
-	// } else if file := ToString(args["--file"]); file != "" {
-	// 	ic.service.UploadSingleResource(args["--file"].(string))
-	// }
 }
 
 func init() {

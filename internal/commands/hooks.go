@@ -10,30 +10,27 @@ type HooksCmd struct {
 	service services.IHooksSrv
 }
 
-func (ic HooksCmd) Usage() string {
+func (hc HooksCmd) Usage() string {
 	return `
 Usage:
 	y2c hooks list [<instance_or_space_directory>]
-	y2c hooks show [<instance_or_space_directory>] <name>
+	y2c hooks show <name> [<instance_or_space_directory>]
 
 Options:
 	<name> 		The name of the hook to show
 `
 }
 
-func (ic HooksCmd) Handler(args docopt.Opts) {
+func (hc HooksCmd) Handler(args docopt.Opts) {
 	if args["list"].(bool) {
 		dir := ToString(args["<instance_or_space_directory>"])
 		if dir == "" {
 			dir = "."
 		}
-		ic.service.List(dir)
+		hc.service.List(dir)
+	} else if args["show"].(bool) {
+		hc.service.Show(ToString(args["<name>"]), ToString(args["<instance_or_space_directory>"]))
 	}
-	// if spaceDir := ToString(args["<space_directory>"]); spaceDir != "" {
-	// 	ic.service.UploadSpace(spaceDir)
-	// } else if file := ToString(args["--file"]); file != "" {
-	// 	ic.service.UploadSingleResource(args["--file"].(string))
-	// }
 }
 
 func init() {

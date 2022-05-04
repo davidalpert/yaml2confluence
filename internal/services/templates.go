@@ -12,6 +12,7 @@ import (
 
 type ITemplatesSrv interface {
 	List(string)
+	Show(string, string)
 }
 
 type TemplatesSrv struct{}
@@ -30,6 +31,18 @@ func (TemplatesSrv) List(instanceDirectory string) {
 	}
 
 	prettyPrintAssets(assets)
+}
+
+func (TemplatesSrv) Show(name, instanceDirectory string) {
+	dirProps := utils.GetDirectoryProperties(instanceDirectory)
+	tp := resources.NewTemplateProcessor(dirProps.TemplatesDir)
+
+	template, err := tp.Get(name)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	fmt.Println(template)
 }
 
 func prettyPrintAssets(assets []resources.IAsset) {

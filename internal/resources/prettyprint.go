@@ -30,7 +30,7 @@ func init() {
 func PrettyPrint(target RenderTarget, page *Page, w *os.File) {
 	switch target {
 	case YAML:
-		prettyPrintYaml(page.Resource.Node, w)
+		PrettyPrintYaml(page.Resource.Node, w)
 	case JSON:
 		prettyPrintJson(page.Resource.ToOrderedMap(), w)
 	case MST:
@@ -38,7 +38,7 @@ func PrettyPrint(target RenderTarget, page *Page, w *os.File) {
 	}
 }
 
-func prettyPrintYaml(node *yaml.Node, w io.Writer) {
+func PrettyPrintYaml(node *yaml.Node, w io.Writer) {
 	printer := yqlib.NewPrinter(yqlib.NewYamlEncoder(4, shouldColorize(), true, false), yqlib.NewSinglePrinterWriter(w))
 
 	list, err := yqlib.NewAllAtOnceEvaluator().EvaluateNodes(".", node)

@@ -14,6 +14,7 @@ import (
 
 type HookProcessor struct {
 	shouldPrecompile bool
+	hooks            map[string]*Hook
 	kindHooks        map[string]*Hook
 	patternHooks     []*Hook
 }
@@ -66,12 +67,14 @@ func (jc *JqCommand) Run(json string) (string, error) {
 func NewHookProcessor(hooksDir string, precompile bool) *HookProcessor {
 	hp := HookProcessor{
 		shouldPrecompile: precompile,
+		hooks:            map[string]*Hook{},
 		kindHooks:        map[string]*Hook{},
 	}
 
 	hooks := append(loadHooks(hooksDir))
 
 	for _, hook := range hooks {
+		hp.hooks[hook.Asset.GetName()] = hook
 		if hook.Config.Target == "" {
 			hp.kindHooks[hook.Asset.GetName()] = hook
 		} else {
@@ -80,6 +83,10 @@ func NewHookProcessor(hooksDir string, precompile bool) *HookProcessor {
 	}
 
 	return &hp
+}
+
+func (hp *HookProcessor) Get(hookName string) *Hook {
+	return hp.hooks[hookName]
 }
 
 func (hp *HookProcessor) GetHooks(kind string) []*Hook {
