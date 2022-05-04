@@ -191,12 +191,10 @@ func (api ConfluenceApiService) UpsertPage(page UpsertPageContext) (string, stri
 func (api ConfluenceApiService) DeletePage(id string) error {
 	_, err := api.request("DELETE", fmt.Sprintf("/content/%s", id), nil)
 
-	// Confluence Server will mark a page as trashed on deletion
-	// That page can then linger in the system for a few seconds, causing title collisions on page moves
+	// Confluence will mark a page as trashed on deletion
+	// That page can then linger in the system for a few seconds (or longer), causing title collisions on page moves
 	// Blindly attempt to permanently delete the trashed content, we don't care if this works or not
-	if api.IsServerInstance() {
-		api.request("DELETE", fmt.Sprintf("/content/%s?status=trashed", id), nil)
-	}
+	api.request("DELETE", fmt.Sprintf("/content/%s?status=trashed", id), nil)
 
 	return err
 }
