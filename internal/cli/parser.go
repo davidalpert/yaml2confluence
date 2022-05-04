@@ -30,6 +30,7 @@ Commands:
 	upload  		Upload resources to Confluence
 	render  		Render a resource to a specific output format
 	hooks 			List or show the configured hooks
+	anchor 			Anchor a space to a parent page 		
 	
 See 'y2c <command> ?' for more information on a specific command.
 `
