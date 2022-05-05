@@ -17,7 +17,7 @@ Usage:
 
 Options:
 	<file>     							The YAML resource to render
-	-o <format>, --output <format>    	The phase to render to (yaml,json,mst)
+	-o <format>, --output <format>    	The phase to render to (yaml,json,wiki)
 `
 }
 
