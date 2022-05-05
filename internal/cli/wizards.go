@@ -3,13 +3,14 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/NorthfieldIT/yaml2confluence/internal/confluence"
 )
 
-func NewInstanceWizard() confluence.InstanceConfig {
+func NewInstanceWizard(baseDir string) (confluence.InstanceConfig, string) {
 	instance := confluence.InstanceConfig{}
 
 	confluenceTypeSelect := &survey.Select{
@@ -32,7 +33,14 @@ func NewInstanceWizard() confluence.InstanceConfig {
 		os.Exit(1)
 	}
 
-	return instance
+	var instanceDir string
+	savePrompt := &survey.Select{
+		Message: "Choose where to save instance configuration:",
+		Options: []string{filepath.Join(baseDir, instance.Name), filepath.Join(baseDir)},
+	}
+	survey.AskOne(savePrompt, &instanceDir, survey.WithValidator(survey.Required))
+
+	return instance, instanceDir
 }
 
 var user survey.Question = survey.Question{

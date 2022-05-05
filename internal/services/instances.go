@@ -22,7 +22,7 @@ func NewInstancesService() InstancesSrv {
 }
 
 func (InstancesSrv) New(baseDir string, configOnly bool) {
-	instance := cli.NewInstanceWizard()
+	instance, instanceDir := cli.NewInstanceWizard(baseDir)
 	secret := utils.GetSecretAndGenerateIfMissing()
 
 	var authPointer *string
@@ -48,7 +48,7 @@ func (InstancesSrv) New(baseDir string, configOnly bool) {
 		os.Exit(0)
 	}
 
-	utils.CreateInstanceDirectory(baseDir, instance.Name, string(configYaml))
+	utils.CreateInstanceDirectory(instanceDir, string(configYaml))
 }
 
 func (InstancesSrv) List() {

@@ -77,6 +77,15 @@ func GetDirectoryProperties(path string) DirectoryProperties {
 	spaceKey := ""
 	if len(dirTokens) == 2 {
 		spaceKey = strings.Split(dirTokens[1], "/")[0]
+	} else if len(dirTokens) == 1 {
+		// it's assumed the space key was passed, treat the current directory as baseDir
+		// TODO this is ugly, clean up
+		current, err := fs.Getwd()
+		if err != nil {
+			panic(err)
+		}
+		baseDir = current
+		spaceKey = path
 	}
 
 	props := DirectoryProperties{}
@@ -106,47 +115,17 @@ func GetDirectoryProperties(path string) DirectoryProperties {
 	return props
 }
 
-func CreateInstanceDirectory(baseDir string, name string, config string) {
-	var dir string
-	current, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	if baseDir != "" {
-		if filepath.IsAbs(baseDir) {
-			dir = baseDir
-		} else {
-			absPath, err := filepath.Abs(filepath.Join(current, baseDir))
-			if err != nil {
-				panic(err)
-			}
-			dir = absPath
-		}
-	} else {
-		dir = current
-	}
-
-	instanceDir := filepath.Join(dir, name)
+func CreateInstanceDirectory(instanceDir string, config string) {
 	configFile := filepath.Join(instanceDir, "config.yml")
 
 	// create instance directory
-	err = os.Mkdir(instanceDir, 0755)
-	if err != nil {
-		if os.IsExist(err) {
-			fmt.Println(instanceDir + " already exists.")
-			os.Exit(1)
-		} else {
-			fmt.Printf("Failed to create instance directory %s\n%s\n", instanceDir, err.Error())
-			os.Exit(1)
-		}
-	}
+	os.Mkdir(instanceDir, 0755)
 
 	// create spaces, templates, and hooks directories
 	createDirectories(instanceDir, []string{"spaces", "templates", "hooks"})
 
 	// write config.yml
-	err = os.WriteFile(configFile, []byte(config), 0644)
+	err := os.WriteFile(configFile, []byte(config), 0644)
 	if err != nil {
 		panic(err)
 	}

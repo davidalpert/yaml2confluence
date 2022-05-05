@@ -13,7 +13,7 @@ import (
 type InstanceConfig struct {
 	Name       string
 	Type       string
-	Protocol   string
+	Protocol   string `yaml:"protocol,omitempty"`
 	Host       string
 	API_prefix string
 	User       string

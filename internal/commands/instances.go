@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/NorthfieldIT/yaml2confluence/internal/cli"
 	"github.com/NorthfieldIT/yaml2confluence/internal/services"
+	"github.com/NorthfieldIT/yaml2confluence/internal/utils"
 	"github.com/docopt/docopt-go"
 )
 
@@ -31,7 +32,7 @@ func (ic InstanceCmd) Handler(args docopt.Opts) {
 	if args["list"].(bool) {
 		ic.service.List()
 	} else if args["new"].(bool) {
-		ic.service.New(ToString(args["<base_dir>"]), args["--config-only"].(bool))
+		ic.service.New(utils.ResolveAbsolutePathDir(ToString(args["<base_dir>"])), args["--config-only"].(bool))
 	}
 }
 
