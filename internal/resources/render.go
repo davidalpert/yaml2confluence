@@ -80,7 +80,7 @@ func (rt *RenderTools) RenderTo(target RenderTarget, p *Page) {
 			fmt.Printf("Failed to render %s\n%s", filepath.Join(rt.dirProps.SpaceDir, p.Resource.Path), err.Error())
 			os.Exit(1)
 		}
-		renderContent(p, template)
+		renderContent(p, template, hookset.Header, hookset.Footer)
 	}
 }
 
@@ -90,8 +90,14 @@ func (rt *RenderTools) RenderAll(pt *PageTree) {
 	}
 }
 
-func renderContent(p *Page, template string) {
+func renderContent(p *Page, template string, header string, footer string) {
 	p.Content.Markup = mustache.Render(template, p.Resource.ToObject())
+	if header != "" {
+		p.Content.Markup = header + "\n" + p.Content.Markup
+	}
+	if footer != "" {
+		p.Content.Markup += "\n" + footer
+	}
 	hasher := sha256.New()
 	hasher.Write([]byte(p.Content.Markup))
 	p.Content.Sha256 = hex.EncodeToString(hasher.Sum(nil))

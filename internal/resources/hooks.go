@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 
 	. "github.com/flant/libjq-go"
 	"github.com/flant/libjq-go/pkg/jq"
@@ -32,11 +33,15 @@ type HookConfig struct {
 	Merges    yaml.Node `yaml:"merges"`
 	Yq        []string  `yaml:"yq"`
 	Jq        []string  `yaml:"jq"`
+	Header    string    `yaml:"header"`
+	Footer    string    `yaml:"footer"`
 }
 
 type HookSet struct {
-	Jq []JqCommand
-	Yq []YqHooks
+	Jq     []JqCommand
+	Yq     []YqHooks
+	Header string
+	Footer string
 }
 
 type JqCommand struct {
@@ -120,6 +125,8 @@ func (hp *HookProcessor) GetAll() []*Hook {
 
 func (hp *HookProcessor) GetHookSet(kind string) HookSet {
 	hookset := HookSet{}
+	headers := []string{}
+	footers := []string{}
 
 	for _, hook := range hp.GetHooks(kind) {
 		for _, jq := range hook.Config.Jq {
@@ -141,7 +148,16 @@ func (hp *HookProcessor) GetHookSet(kind string) HookSet {
 
 		hookset.Yq = append(hookset.Yq, yqHooks)
 
+		if hook.Config.Header != "" {
+			headers = append(headers, hook.Config.Header)
+		}
+		if hook.Config.Footer != "" {
+			footers = append(footers, hook.Config.Footer)
+		}
 	}
+
+	hookset.Header += strings.Join(headers, "\n")
+	hookset.Footer += strings.Join(footers, "\n")
 
 	return hookset
 }
