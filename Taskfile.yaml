@@ -1,0 +1,57 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  REPO_NAME: yaml2confluence
+  REPO_OWNER: NorthfieldIT
+  CMD_NAME: y2c
+  CURRENT_VERSION:
+    sh: sbot get version
+  VERSION: '{{ .NEXT_VERSION | default .CURRENT_VERSION }}'
+  OUTPUT_FOLDER: ./bin
+
+env:
+  CGO_ENABLED: 1
+  CGO_CFLAGS: '-I{{ .ROOT_DIR }}/libjq/include'
+  CGO_LDFLAGS: '-L{{ .ROOT_DIR }}/libjq/lib'
+
+tasks:
+  default:
+    deps:
+      - help
+    silent: true
+
+  build-libjq:
+    desc: fetches and builds the JQ C libraries for running jq/yq hooks
+    sources:
+      - scripts/build-libjq-go.sh
+    generates:
+      - libjq/include/jq.h
+    cmds:
+      - ./scripts/build-libjq-go.sh
+    run: once
+
+  test:
+    desc: runs unit tests
+    deps:
+      - build-libjq
+    cmds:
+      - go test ./...
+
+  build:
+    desc: fetches and builds the JQ C libraries for running jq/yq hooks
+    deps:
+      - build-libjq
+# need to figure out why test is failing on my machine before I can make it a prereq of build
+#      - test
+    cmds:
+      - go build -a -installsuffix cgo -o {{ .OUTPUT_FOLDER }}/{{ .CMD_NAME }} cmds/{{ .CMD_NAME }}/main.go
+
+  help:
+    desc: list targets
+    cmds:
+      - echo "{{ .CMD_NAME}} v{{ .VERSION }}"
+      - echo ""
+      - task --list
+    silent: true
